@@ -16,6 +16,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+var (
+	APP_HEALTHY = false
+)
+
 type routerOpts struct {
 	common  *hHandler.CommonHandler
 	receipt *handler.ReceiptHandler
@@ -47,7 +51,7 @@ func newRouter(config *config.AppConfig) *gin.Engine {
 		AllowedFileType:               config.Ocr.AllowedFileType,
 	})
 
-	commonHandler := &hHandler.CommonHandler{}
+	commonHandler := hHandler.NewCommonHandler(&APP_HEALTHY)
 	receiptHandler := handler.NewReceipHandler(receiptDetectionService)
 
 	return createRouter(routerOpts{
@@ -88,7 +92,7 @@ func corsRouting(router *gin.Engine, corsConfig cors.Config, allowedOrigins []st
 }
 
 func commonRouting(router *gin.Engine, handler *hHandler.CommonHandler) {
-	router.GET("/ping", handler.Ping)
+	router.GET("/health", handler.Health)
 	router.NoRoute(handler.NoRoute)
 }
 
