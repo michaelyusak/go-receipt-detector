@@ -123,7 +123,7 @@ func (s *receiptDetection) DetectAndStoreReceipt(ctx context.Context, file multi
 			return
 		}
 
-		id, err := s.receiptDetectionResultsRepo.InserOne(ctx, details)
+		id, err := s.receiptDetectionResultsRepo.InsertOne(ctx, details)
 		if err != nil {
 			errCh <- hApperror.InternalServerError(hApperror.AppErrorOpt{
 				Message: fmt.Sprintf("%s[receiptDetectionResultsRepo.InserOne] Failed to record ocr result: %v", logHeading, err),

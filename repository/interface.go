@@ -19,7 +19,7 @@ type ReceiptDetectionHistoriesRepository interface {
 }
 
 type ReceiptDetectionResultsRepository interface {
-	InserOne(ctx context.Context, result []entity.OcrEngineItemDetail) (string, error)
+	InsertOne(ctx context.Context, result []entity.OcrEngineItemDetail) (string, error)
 }
 
 type ReceiptImageRepository interface {
