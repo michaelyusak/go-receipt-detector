@@ -1,7 +1,13 @@
 package server
 
 import (
+	"fmt"
+	"receipt-detector/adaptor"
 	"receipt-detector/config"
+	"receipt-detector/external/ocr"
+	"receipt-detector/handler"
+	"receipt-detector/repository"
+	"receipt-detector/service"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -11,14 +17,42 @@ import (
 )
 
 type routerOpts struct {
-	common *hHandler.CommonHandler
+	common  *hHandler.CommonHandler
+	receipt *handler.ReceiptHandler
 }
 
 func newRouter(config *config.AppConfig) *gin.Engine {
+	db, err := adaptor.ConnectPostgres(config.Db)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to connect to db: %v", err))
+	}
+
+	es, err := adaptor.ConnectElastic(config.Elasticsearch)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to connect to es: %v", err))
+	}
+
+	receiptDetectionHistoriesRepo := repository.NewReceiptDetectionHistoriesPostgresRepo(db)
+	receiptDetectionResultsRepo := repository.NewReceiptDetectionResultsElasticRepo(es, config.Elasticsearch.Indices.ReceiptDetectionResults)
+	receiptImageRepo := repository.NewReceiptImageLocalStorage(config.Storage.Local.Directory)
+
+	ocrEngine := ocr.NewOcEngineRestClient(config.Ocr.OcrEngine.BaseUrl)
+
+	receiptDetectionService := service.NewReceiptDetectionService(service.ReceiptDetectionResultsOpts{
+		OcrEngine:                     ocrEngine,
+		ReceiptDetectionHistoriesRepo: receiptDetectionHistoriesRepo,
+		ReceiptDetectionResultsRepo:   receiptDetectionResultsRepo,
+		ReceiptImageRepo:              receiptImageRepo,
+		MaxFileSizeMb:                 config.Ocr.MaxFileSize,
+		AllowedFileType:               config.Ocr.AllowedFileType,
+	})
+
 	commonHandler := &hHandler.CommonHandler{}
+	receiptHandler := handler.NewReceipHandler(receiptDetectionService)
 
 	return createRouter(routerOpts{
-		common: commonHandler,
+		common:  commonHandler,
+		receipt: receiptHandler,
 	},
 		config.Cors.AllowedOrigins)
 }
@@ -39,6 +73,7 @@ func createRouter(opts routerOpts, allowedOrigins []string) *gin.Engine {
 
 	corsRouting(router, corsConfig, allowedOrigins)
 	commonRouting(router, opts.common)
+	receiptRouting(router, opts.receipt)
 
 	return router
 }
@@ -55,4 +90,10 @@ func corsRouting(router *gin.Engine, corsConfig cors.Config, allowedOrigins []st
 func commonRouting(router *gin.Engine, handler *hHandler.CommonHandler) {
 	router.GET("/ping", handler.Ping)
 	router.NoRoute(handler.NoRoute)
+}
+
+func receiptRouting(router *gin.Engine, handler *handler.ReceiptHandler) {
+	receiptRouter := router.Group("/receipt")
+
+	receiptRouter.POST("/detect", handler.DetectReceipt)
 }
