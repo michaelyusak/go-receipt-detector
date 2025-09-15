@@ -1,6 +1,47 @@
 {
     "port": ":8081",
+    "log_level": "DEBUG",
+    "graceful_period": "2s",
+    "cors": {
+        "allowed_origins": [
+            "*"
+        ]
+    },
+    "db": {
+        "host": "127.0.0.1",
+        "port": "5432",
+        "username": "postgres",
+        "password": "password",
+        "db_name": "receipt_detector_db"
+    },
+    "elasticsearch": {
+        "addresses": [
+            "https://localhost:9200"
+        ],
+        "username": "elastic",
+        "password": "password",
+        "indices": {
+            "receipt_detection_results": "receipt-detection-results"
+        },
+        "ca_cert_path": "/path/to/cert"
+    },
+    "storage": {
+        "local": {
+            "directory": "storage/images/receipts"
+        }
+    },
     "ocr": {
-        "base_url": "http://127.0.0.1:8080"
+        "base_url": "http://127.0.0.1:8080",
+        "max_file_size_mb": 5.0,
+        "allowed_file_type": {
+            "image/jpeg": true,
+            "image/png": true,
+            "image/gif": true,
+            "image/webp": true,
+            "image/bmp": true,
+            "image/tiff": true,
+            "image/x-icon": true,
+            "image/svg+xml": true
+        }
     }
 }

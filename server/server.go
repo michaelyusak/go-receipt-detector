@@ -30,6 +30,7 @@ func Init() {
 
 	go func() {
 		logrus.Infof("Sever running on port %s", config.Port)
+		APP_HEALTHY = true
 
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logrus.Fatalf("listen: %s\n", err)
@@ -43,6 +44,8 @@ func Init() {
 	<-quit
 
 	logrus.Infof("Server shutting down in %s ...", time.Duration(config.GracefulPeriod).String())
+
+	APP_HEALTHY = false
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.GracefulPeriod))
 	defer cancel()
