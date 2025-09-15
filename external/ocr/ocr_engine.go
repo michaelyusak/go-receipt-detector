@@ -24,7 +24,7 @@ func NewOcEngineRestClient(baseUrl string) *ocrEngineRestClient {
 		client:  resty.New(),
 		baseUrl: baseUrl,
 
-		detectReceiptPath: "/detect",
+		detectReceiptPath: "/receipt/detect",
 		fileParam:         "file",
 
 		logHeading: "[external][ocr][ocrEngineRestClient]",
