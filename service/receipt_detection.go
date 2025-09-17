@@ -168,4 +168,45 @@ func (s *receiptDetection) DetectAndStoreReceipt(ctx context.Context, file multi
 		Result:   itemDetails,
 	}, nil
 }
+
+func (s *receiptDetection) GetResult(ctx context.Context, resultId string) (*entity.ReceiptDetectionResult, error) {
+	logHeading := s.logHeading + "[GetResult]"
+
+	history, err := s.receiptDetectionHistoriesRepo.GetByResultId(ctx, resultId)
+	if err != nil {
+		return nil, hApperror.InternalServerError(hApperror.AppErrorOpt{
+			Message: fmt.Sprintf("%s[receiptDetectionHistoriesRepo.GetByResultId] Failed to get history: %v [result_id: %s]", logHeading, err, resultId),
+		})
+	}
+	if history == nil {
+		return nil, hApperror.BadRequestError(hApperror.AppErrorOpt{
+			Code:    http.StatusBadRequest,
+			Message: fmt.Sprintf("%s[NilHistory] History not found [result_id: %s]", logHeading, resultId),
+		})
+	}
+
+	if history.ResultId == resultId && history.RevisionId != "" {
+		logrus.Infof("%s[RevisionExists] [requested_result_id: %s][revision_result_id: %s]", logHeading, history.ResultId, history.RevisionId)
+		resultId = history.RevisionId
+	}
+
+	result, err := s.receiptDetectionResultsRepo.GetByResultId(ctx, resultId)
+	if err != nil {
+		return nil, hApperror.InternalServerError(hApperror.AppErrorOpt{
+			Message: fmt.Sprintf("%s[receiptDetectionResultsRepo.GetByResultId] Failed to get result: %v [result_id: %s]", logHeading, err, resultId),
+		})
+	}
+
+	imageUrl, err := s.receiptImageRepo.GetImageUrl(ctx, history.ImagePath)
+	if err != nil {
+		return nil, hApperror.InternalServerError(hApperror.AppErrorOpt{
+			Message: fmt.Sprintf("%s[receiptImageRepo.GetImageUrl] Failed to get image url: %v [result_id: %s]", logHeading, err, resultId),
+		})
+	}
+
+	return &entity.ReceiptDetectionResult{
+		ResultId: resultId,
+		ImageUrl: imageUrl,
+		Result:   result,
+	}, nil
 }
