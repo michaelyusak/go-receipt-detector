@@ -24,6 +24,7 @@ type receiptDetection struct {
 	receiptDetectionHistoriesRepo repository.ReceiptDetectionHistoriesRepository
 	receiptDetectionResultsRepo   repository.ReceiptDetectionResultsRepository
 	receiptImageRepo              repository.ReceiptImageRepository
+	cacheRepo                     repository.CacheRepository
 
 	maxFileSizeMb   float64
 	allowedFileType map[string]bool
@@ -37,6 +38,7 @@ type ReceiptDetectionResultsOpts struct {
 	ReceiptDetectionHistoriesRepo repository.ReceiptDetectionHistoriesRepository
 	ReceiptDetectionResultsRepo   repository.ReceiptDetectionResultsRepository
 	ReceiptImageRepo              repository.ReceiptImageRepository
+	CacheRepo                     repository.CacheRepository
 	MaxFileSizeMb                 float64
 	AllowedFileType               map[string]bool
 }
@@ -53,6 +55,7 @@ func NewReceiptDetectionService(opts ReceiptDetectionResultsOpts) *receiptDetect
 		receiptDetectionHistoriesRepo: opts.ReceiptDetectionHistoriesRepo,
 		receiptDetectionResultsRepo:   opts.ReceiptDetectionResultsRepo,
 		receiptImageRepo:              opts.ReceiptImageRepo,
+		cacheRepo:                     opts.CacheRepo,
 
 		maxFileSizeMb:   opts.MaxFileSizeMb,
 		allowedFileType: opts.AllowedFileType,
@@ -146,11 +149,11 @@ func (s *receiptDetection) DetectAndStoreReceipt(ctx context.Context, file multi
 		}
 	}
 
-	go func(fileName, resultId string) {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*10))
+	go func(fileName, resultId string, itemDetails []entity.OcrEngineItemDetail) {
+		c, cancel := context.WithTimeout(context.Background(), time.Duration(time.Minute))
 		defer cancel()
 
-		err = s.receiptDetectionHistoriesRepo.InsertOne(ctx, entity.ReceiptDetectionHistory{
+		err = s.receiptDetectionHistoriesRepo.InsertOne(c, entity.ReceiptDetectionHistory{
 			ImagePath: fileName,
 			ResultId:  resultId,
 		})
@@ -161,7 +164,29 @@ func (s *receiptDetection) DetectAndStoreReceipt(ctx context.Context, file multi
 				"error":     err,
 			}).Errorf("%s[receiptDetectionHistoriesRepo.InsertOne] Failed to insert reciept detection history", logHeading)
 		}
-	}(fileName, resultId)
+
+		imageUrl, err := s.receiptImageRepo.GetImageUrl(c, fileName)
+		if err != nil {
+			logrus.WithFields(logrus.Fields{
+				"result_id": resultId,
+				"error":     err,
+			}).Warnf("%s[receiptImageRepo.GetImageUrl] Failed to get image url", logHeading)
+		}
+
+		result := entity.ReceiptDetectionResult{
+			ResultId: resultId,
+			ImageUrl: imageUrl,
+			Result:   itemDetails,
+		}
+
+		err = s.cacheRepo.SetReceiptDetectionResult(c, result)
+		if err != nil {
+			logrus.WithFields(logrus.Fields{
+				"result_id": resultId,
+				"error":     err,
+			}).Warnf("%s[cacheRepo.SetReceiptDetectionResult] Failed to cache result", logHeading)
+		}
+	}(fileName, resultId, itemDetails)
 
 	return &entity.ReceiptDetectionResult{
 		ResultId: resultId,
@@ -190,6 +215,20 @@ func (s *receiptDetection) GetResult(ctx context.Context, resultId string) (*ent
 		resultId = history.RevisionId
 	}
 
+	cachedResult, err := s.cacheRepo.GetReceiptDetectionResult(ctx, resultId)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"result_id": resultId,
+			"error":     err,
+		}).Errorf("%s[cacheRepo.GetReceiptDetectionResult] Failed to get data", logHeading)
+	}
+	if cachedResult != nil {
+		logrus.WithFields(logrus.Fields{
+			"result_id": resultId,
+		}).Infof("%s[CacheFound]", logHeading)
+		return cachedResult, nil
+	}
+
 	result, err := s.receiptDetectionResultsRepo.GetByResultId(ctx, resultId)
 	if err != nil {
 		return nil, hApperror.InternalServerError(hApperror.AppErrorOpt{
@@ -204,9 +243,24 @@ func (s *receiptDetection) GetResult(ctx context.Context, resultId string) (*ent
 		})
 	}
 
-	return &entity.ReceiptDetectionResult{
+	detectionResult := entity.ReceiptDetectionResult{
 		ResultId: resultId,
 		ImageUrl: imageUrl,
 		Result:   result,
-	}, nil
+	}
+
+	go func() {
+		c, cancel := context.WithTimeout(context.Background(), time.Minute)
+		defer cancel()
+
+		err := s.cacheRepo.SetReceiptDetectionResult(c, detectionResult)
+		if err != nil {
+			logrus.WithFields(logrus.Fields{
+				"result_id": detectionResult.ResultId,
+				"error":     err,
+			}).Errorf("%s[cacheRepo.SetReceiptDetectionResult] Failed to cache result", logHeading)
+		}
+	}()
+
+	return &detectionResult, nil
 }

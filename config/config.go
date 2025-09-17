@@ -35,6 +35,14 @@ type ElasticSearchConfig struct {
 	CaCert     []byte                     `json:"-"`
 }
 
+type CacheDurationConfig struct {
+	ReceiptDetectionResult hEntity.Duration `json:"receipt_detection_result"`
+}
+
+type CacheConfig struct {
+	Duration CacheDurationConfig `json:"duration"`
+}
+
 type LocalStorageConfig struct {
 	Directory          string `json:"directory"`
 	EnableStaticServer bool   `json:"enable_static_server"`
@@ -53,6 +61,8 @@ type AppConfig struct {
 	Cors           CorsConfig          `json:"cors"`
 	Db             hEntity.DBConfig    `json:"db"`
 	Elasticsearch  ElasticSearchConfig `json:"elasticsearch"`
+	Redis          hEntity.RedisConfig `json:"redis"`
+	Cache          CacheConfig         `json:"cache"`
 	Storage        StorageConfig       `json:"storage"`
 	Ocr            OcrConfig           `json:"ocr"`
 }

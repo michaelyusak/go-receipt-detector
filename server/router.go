@@ -8,6 +8,7 @@ import (
 	"receipt-detector/handler"
 	"receipt-detector/repository"
 	"receipt-detector/service"
+	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -36,9 +37,12 @@ func newRouter(config *config.AppConfig) *gin.Engine {
 		panic(fmt.Sprintf("Failed to connect to es: %v", err))
 	}
 
+	redis := adaptor.ConnectRedis(config.Redis)
+
 	receiptDetectionHistoriesRepo := repository.NewReceiptDetectionHistoriesPostgresRepo(db)
 	receiptDetectionResultsRepo := repository.NewReceiptDetectionResultsElasticRepo(es, config.Elasticsearch.Indices.ReceiptDetectionResults)
 	receiptImageRepo := repository.NewReceiptImageLocalStorage(config.Storage.Local.Directory, config.Storage.Local.ServerHost+config.Storage.Local.ServerStaticPath)
+	cacheRepo := repository.NewCacheRedisRepo(redis, time.Duration(config.Cache.Duration.ReceiptDetectionResult))
 
 	ocrEngine := ocr.NewOcEngineRestClient(config.Ocr.OcrEngine.BaseUrl)
 
@@ -49,6 +53,7 @@ func newRouter(config *config.AppConfig) *gin.Engine {
 		ReceiptImageRepo:              receiptImageRepo,
 		MaxFileSizeMb:                 config.Ocr.MaxFileSize,
 		AllowedFileType:               config.Ocr.AllowedFileType,
+		CacheRepo:                     cacheRepo,
 	})
 
 	commonHandler := hHandler.NewCommonHandler(&APP_HEALTHY)
