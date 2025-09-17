@@ -26,11 +26,13 @@ var (
 
 type receiptImageLocalStorage struct {
 	localDirectory string
+	serverBaseUrl  string
 }
 
-func NewReceiptImageLocalStorage(localDirectory string) *receiptImageLocalStorage {
+func NewReceiptImageLocalStorage(localDirectory, serverBaseUrl string) *receiptImageLocalStorage {
 	return &receiptImageLocalStorage{
 		localDirectory: localDirectory,
+		serverBaseUrl:  serverBaseUrl,
 	}
 }
 
