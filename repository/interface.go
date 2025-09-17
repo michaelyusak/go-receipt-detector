@@ -26,4 +26,5 @@ type ReceiptDetectionResultsRepository interface {
 
 type ReceiptImageRepository interface {
 	StoreOne(ctx context.Context, contentType string, fileHeader *multipart.FileHeader) (string, error)
+	GetImageUrl(ctx context.Context, filePath string) (string, error)
 }

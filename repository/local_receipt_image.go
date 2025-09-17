@@ -6,6 +6,7 @@ import (
 	"io"
 	"mime/multipart"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -78,4 +79,10 @@ func (r *receiptImageLocalStorage) StoreOne(ctx context.Context, contentType str
 	}
 
 	return fileName, nil
+}
+
+func (r *receiptImageLocalStorage) GetImageUrl(ctx context.Context, filePath string) (string, error) {
+	url := strings.Replace(filePath, r.localDirectory, r.serverBaseUrl, 1)
+
+	return url, nil
 }
