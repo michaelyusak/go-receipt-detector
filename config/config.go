@@ -53,6 +53,7 @@ type AppConfig struct {
 	Cors           CorsConfig          `json:"cors"`
 	Db             hEntity.DBConfig    `json:"db"`
 	Elasticsearch  ElasticSearchConfig `json:"elasticsearch"`
+	Redis          hEntity.RedisConfig `json:"redis"`
 	Storage        StorageConfig       `json:"storage"`
 	Ocr            OcrConfig           `json:"ocr"`
 }

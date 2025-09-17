@@ -25,6 +25,12 @@
         },
         "ca_cert_path": "/path/to/cert"
     },
+    "redis": {
+        "host": "127.0.0.1",
+        "port": "6379",
+        "password": "password",
+        "db": 0
+    },
     "storage": {
         "local": {
             "directory": "/Users/michaelyusaktarigan/Documents/go-receipt-detector/storage/images/receipts",
