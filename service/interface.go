@@ -7,5 +7,5 @@ import (
 )
 
 type ReceiptDetection interface {
-	DetectAndStoreReceipt(ctx context.Context, file multipart.File, fileHeader *multipart.FileHeader) ([]entity.OcrEngineItemDetail, error)
+	DetectAndStoreReceipt(ctx context.Context, file multipart.File, fileHeader *multipart.FileHeader) (*entity.ReceiptDetectionResult, error)
 }

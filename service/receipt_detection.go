@@ -62,7 +62,7 @@ func NewReceiptDetectionService(opts ReceiptDetectionResultsOpts) *receiptDetect
 	}
 }
 
-func (s *receiptDetection) DetectAndStoreReceipt(ctx context.Context, file multipart.File, fileHeader *multipart.FileHeader) ([]entity.OcrEngineItemDetail, error) {
+func (s *receiptDetection) DetectAndStoreReceipt(ctx context.Context, file multipart.File, fileHeader *multipart.FileHeader) (*entity.ReceiptDetectionResult, error) {
 	logHeading := s.logHeading + "[DetectAndStoreReceipt]"
 
 	if fileHeader.Size > int64(s.maxFileSizeMb)*1024*1024 {
@@ -163,5 +163,9 @@ func (s *receiptDetection) DetectAndStoreReceipt(ctx context.Context, file multi
 		}
 	}(fileName, resultId)
 
-	return itemDetails, nil
+	return &entity.ReceiptDetectionResult{
+		ResultId: resultId,
+		Result:   itemDetails,
+	}, nil
+}
 }
