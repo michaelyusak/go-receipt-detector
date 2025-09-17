@@ -58,10 +58,11 @@ func newRouter(config *config.AppConfig) *gin.Engine {
 		common:  commonHandler,
 		receipt: receiptHandler,
 	},
-		config.Cors.AllowedOrigins)
+		config.Cors.AllowedOrigins,
+		config.Storage.Local)
 }
 
-func createRouter(opts routerOpts, allowedOrigins []string) *gin.Engine {
+func createRouter(opts routerOpts, allowedOrigins []string, localStorageConfig config.LocalStorageConfig) *gin.Engine {
 	router := gin.New()
 
 	corsConfig := cors.DefaultConfig()
@@ -74,6 +75,10 @@ func createRouter(opts routerOpts, allowedOrigins []string) *gin.Engine {
 		hMiddleware.ErrorHandlerMiddleware,
 		gin.Recovery(),
 	)
+
+	if localStorageConfig.EnableStaticServer {
+		staticRouting(router, localStorageConfig.ServerStaticPath, localStorageConfig.Directory)
+	}
 
 	corsRouting(router, corsConfig, allowedOrigins)
 	commonRouting(router, opts.common)
@@ -96,8 +101,13 @@ func commonRouting(router *gin.Engine, handler *hHandler.CommonHandler) {
 	router.NoRoute(handler.NoRoute)
 }
 
+func staticRouting(router *gin.Engine, localStorageStaticPath, localStorageDirectory string) {
+	router.Static(localStorageStaticPath, localStorageDirectory)
+}
+
 func receiptRouting(router *gin.Engine, handler *handler.ReceiptHandler) {
 	receiptRouter := router.Group("/receipt")
 
 	receiptRouter.POST("/detect", handler.DetectReceipt)
+	receiptRouter.GET("/:result_id", handler.GetByResultId)
 }
