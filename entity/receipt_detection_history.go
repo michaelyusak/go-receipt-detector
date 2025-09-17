@@ -8,6 +8,6 @@ type ReceiptDetectionHistory struct {
 	IsApproced bool
 	IsReviewed bool
 	CreatedAt  int64
-	UpdatedAt  int64
-	DeletedAt  int64
+	UpdatedAt  *int64
+	DeletedAt  *int64
 }
