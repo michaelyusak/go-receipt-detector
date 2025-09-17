@@ -27,7 +27,10 @@
     },
     "storage": {
         "local": {
-            "directory": "storage/images/receipts"
+            "directory": "/Users/michaelyusaktarigan/Documents/go-receipt-detector/storage/images/receipts",
+            "enable_static_server": true,
+            "server_host": "http://127.0.0.1:8081",
+            "server_static_path": "/assets/images/receipts"
         }
     },
     "ocr": {
