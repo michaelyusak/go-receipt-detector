@@ -16,6 +16,7 @@ type DBTX interface {
 
 type ReceiptDetectionHistoriesRepository interface {
 	InsertOne(ctx context.Context, history entity.ReceiptDetectionHistory) error
+	GetByResultId(ctx context.Context, resultId string) (*entity.ReceiptDetectionHistory, error)
 }
 
 type ReceiptDetectionResultsRepository interface {
