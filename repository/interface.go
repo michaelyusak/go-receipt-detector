@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"mime/multipart"
 	"receipt-detector/entity"
+	"time"
 )
 
 type DBTX interface {
@@ -27,4 +28,12 @@ type ReceiptDetectionResultsRepository interface {
 type ReceiptImageRepository interface {
 	StoreOne(ctx context.Context, contentType string, fileHeader *multipart.FileHeader) (string, error)
 	GetImageUrl(ctx context.Context, filePath string) (string, error)
+}
+
+type CacheRepository interface {
+	SetCache(ctx context.Context, key string, data []byte, duration time.Duration) error
+	GetCache(ctx context.Context, key string) ([]byte, error)
+
+	SetReceiptDetectionResult(ctx context.Context, detectionResult entity.ReceiptDetectionResult) error
+	GetReceiptDetectionResult(ctx context.Context, resultId string) (*entity.ReceiptDetectionResult, error)
 }
