@@ -16,12 +16,15 @@ type DBTX interface {
 
 type ReceiptDetectionHistoriesRepository interface {
 	InsertOne(ctx context.Context, history entity.ReceiptDetectionHistory) error
+	GetByResultId(ctx context.Context, resultId string) (*entity.ReceiptDetectionHistory, error)
 }
 
 type ReceiptDetectionResultsRepository interface {
 	InsertOne(ctx context.Context, result []entity.OcrEngineItemDetail) (string, error)
+	GetByResultId(ctx context.Context, resultId string) ([]entity.OcrEngineItemDetail, error)
 }
 
 type ReceiptImageRepository interface {
 	StoreOne(ctx context.Context, contentType string, fileHeader *multipart.FileHeader) (string, error)
+	GetImageUrl(ctx context.Context, filePath string) (string, error)
 }

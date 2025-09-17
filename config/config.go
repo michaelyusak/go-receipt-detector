@@ -36,7 +36,10 @@ type ElasticSearchConfig struct {
 }
 
 type LocalStorageConfig struct {
-	Directory string `json:"directory"`
+	Directory          string `json:"directory"`
+	EnableStaticServer bool   `json:"enable_static_server"`
+	ServerHost         string `json:"server_host"`
+	ServerStaticPath   string `json:"server_static_path"`
 }
 
 type StorageConfig struct {

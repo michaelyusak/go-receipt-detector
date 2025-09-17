@@ -40,3 +40,24 @@ func (h *ReceiptHandler) DetectReceipt(ctx *gin.Context) {
 
 	hHelper.ResponseOK(ctx, data)
 }
+
+func (h *ReceiptHandler) GetByResultId(ctx *gin.Context) {
+	ctx.Header("Content-Type", "application/json")
+	
+	resultId := ctx.Param("result_id")
+	if resultId == "" {
+		ctx.Error(hApperror.BadRequestError(hApperror.AppErrorOpt{
+			Code: http.StatusBadRequest,
+			ResponseMessage: "result_id must be provided",
+		}))
+		return
+	}
+
+	data, err := h.receiptDetection.GetResult(ctx.Request.Context(), resultId)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	hHelper.ResponseOK(ctx, data)
+}
