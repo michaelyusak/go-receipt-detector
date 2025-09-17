@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"receipt-detector/adaptor"
 	"receipt-detector/config"
 	"receipt-detector/external/ocr"
@@ -29,15 +28,18 @@ type routerOpts struct {
 func newRouter(config *config.AppConfig) *gin.Engine {
 	db, err := adaptor.ConnectPostgres(config.Db)
 	if err != nil {
-		panic(fmt.Sprintf("Failed to connect to db: %v", err))
+		logrus.Panicf("Failed to connect to db: %v", err)
 	}
+	logrus.Info("Connected to postgres")
 
 	es, err := adaptor.ConnectElastic(config.Elasticsearch)
 	if err != nil {
-		panic(fmt.Sprintf("Failed to connect to es: %v", err))
+		logrus.Panicf("Failed to connect to es: %v", err)
 	}
+	logrus.Info("Connected to elasticsearch")
 
 	redis := adaptor.ConnectRedis(config.Redis)
+	logrus.Info("Connected to redis")
 
 	receiptDetectionHistoriesRepo := repository.NewReceiptDetectionHistoriesPostgresRepo(db)
 	receiptDetectionResultsRepo := repository.NewReceiptDetectionResultsElasticRepo(es, config.Elasticsearch.Indices.ReceiptDetectionResults)
