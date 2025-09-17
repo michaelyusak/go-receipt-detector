@@ -23,10 +23,6 @@ func NewReceiptDetectionResultsElasticRepo(client *elasticsearch.TypedClient, re
 }
 
 func (r *receiptDetectionResultsElasticRepo) InsertOne(ctx context.Context, result []entity.OcrEngineItemDetail) (string, error) {
-	logrus.WithFields(logrus.Fields{
-		"result": fmt.Sprintf("%+v", entity.ReceiptDetectionDocument{Result: result}),
-	}).Infof("debug")
-
 	res, err := r.client.Index(r.receiptDetectionResultsIndex).
 		Request(entity.ReceiptDetectionDocument{
 			Result: result,
