@@ -21,6 +21,7 @@ type ReceiptDetectionHistoriesRepository interface {
 
 type ReceiptDetectionResultsRepository interface {
 	InsertOne(ctx context.Context, result []entity.OcrEngineItemDetail) (string, error)
+	GetByResultId(ctx context.Context, resultId string) ([]entity.OcrEngineItemDetail, error)
 }
 
 type ReceiptImageRepository interface {
