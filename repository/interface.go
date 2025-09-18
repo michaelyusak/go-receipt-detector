@@ -37,3 +37,9 @@ type CacheRepository interface {
 	SetReceiptDetectionResult(ctx context.Context, detectionResult entity.ReceiptDetectionResult) error
 	GetReceiptDetectionResult(ctx context.Context, resultId string) (*entity.ReceiptDetectionResult, error)
 }
+
+type BillRepository interface {
+	InsertOne(ctx context.Context, bill entity.Bill) (int64, error)
+	GetByBillId(ctx context.Context, billId int64) (*entity.Bill, error)
+	UpdateBill(ctx context.Context, newBill entity.UpdateBillRequest) error
+}
