@@ -21,9 +21,9 @@ var (
 )
 
 type routerOpts struct {
-	common  *hHandler.CommonHandler
-	receipt *handler.ReceiptHandler
-	bill    *handler.BillHandler
+	common           *hHandler.CommonHandler
+	receiptDetection *handler.ReceiptDetection
+	bill             *handler.BillHandler
 }
 
 func newRouter(config *config.AppConfig) *gin.Engine {
@@ -74,13 +74,13 @@ func newRouter(config *config.AppConfig) *gin.Engine {
 	})
 
 	commonHandler := hHandler.NewCommonHandler(&APP_HEALTHY)
-	receiptHandler := handler.NewReceipHandler(receiptDetectionService)
+	receiptDetectionHandler := handler.NewReceiptDetection(receiptDetectionService)
 	billHandler := handler.NewBillHandler(billService)
 
 	return createRouter(routerOpts{
-		common:  commonHandler,
-		receipt: receiptHandler,
-		bill:    billHandler,
+		common:           commonHandler,
+		receiptDetection: receiptDetectionHandler,
+		bill:             billHandler,
 	},
 		config.Cors.AllowedOrigins,
 		config.Storage.Local)
@@ -106,7 +106,7 @@ func createRouter(opts routerOpts, allowedOrigins []string, localStorageConfig c
 
 	corsRouting(router, corsConfig, allowedOrigins)
 	commonRouting(router, opts.common)
-	receiptRouting(router, opts.receipt)
+	receiptDetectionRouting(router, opts.receiptDetection)
 	billRouting(router, opts.bill)
 
 	return router
@@ -130,11 +130,11 @@ func staticRouting(router *gin.Engine, localStorageStaticPath, localStorageDirec
 	router.Static(localStorageStaticPath, localStorageDirectory)
 }
 
-func receiptRouting(router *gin.Engine, handler *handler.ReceiptHandler) {
-	receiptRouter := router.Group("/receipt")
+func receiptDetectionRouting(router *gin.Engine, handler *handler.ReceiptDetection) {
+	receiptDetectionRouter := router.Group("/receipt/detect")
 
-	receiptRouter.POST("/detect", handler.DetectReceipt)
-	receiptRouter.GET("/:result_id", handler.GetByResultId)
+	receiptDetectionRouter.POST("", handler.DetectReceipt)
+	receiptDetectionRouter.GET("/:result_id", handler.GetByResultId)
 }
 
 func billRouting(router *gin.Engine, handler *handler.BillHandler) {

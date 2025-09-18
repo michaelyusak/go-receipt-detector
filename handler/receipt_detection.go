@@ -10,17 +10,17 @@ import (
 	hHelper "github.com/michaelyusak/go-helper/helper"
 )
 
-type ReceiptHandler struct {
+type ReceiptDetection struct {
 	receiptDetectionService service.ReceiptDetection
 }
 
-func NewReceipHandler(receiptDetectionService service.ReceiptDetection) *ReceiptHandler {
-	return &ReceiptHandler{
+func NewReceiptDetection(receiptDetectionService service.ReceiptDetection) *ReceiptDetection {
+	return &ReceiptDetection{
 		receiptDetectionService: receiptDetectionService,
 	}
 }
 
-func (h *ReceiptHandler) DetectReceipt(ctx *gin.Context) {
+func (h *ReceiptDetection) DetectReceipt(ctx *gin.Context) {
 	ctx.Header("Content-Type", "application/json")
 
 	file, fileHeader, err := ctx.Request.FormFile("file")
@@ -41,7 +41,7 @@ func (h *ReceiptHandler) DetectReceipt(ctx *gin.Context) {
 	hHelper.ResponseOK(ctx, data)
 }
 
-func (h *ReceiptHandler) GetByResultId(ctx *gin.Context) {
+func (h *ReceiptDetection) GetByResultId(ctx *gin.Context) {
 	ctx.Header("Content-Type", "application/json")
 
 	resultId := ctx.Param("result_id")
