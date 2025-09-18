@@ -25,7 +25,7 @@ type ReceiptDetectionResults interface {
 	GetByResultId(ctx context.Context, resultId string) ([]entity.OcrEngineItemDetail, error)
 }
 
-type ReceiptImageRepository interface {
+type ReceiptImages interface {
 	StoreOne(ctx context.Context, contentType string, fileHeader *multipart.FileHeader) (string, error)
 	GetImageUrl(ctx context.Context, filePath string) (string, error)
 }

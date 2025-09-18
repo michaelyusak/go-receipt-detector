@@ -44,7 +44,7 @@ func newRouter(config *config.AppConfig) *gin.Engine {
 
 	receiptDetectionHistoriesRepo := repository.NewReceiptDetectionHistoriesPostgresRepo(db)
 	receiptDetectionResultsRepo := repository.NewReceiptDetectionResultsElastic(es, config.Elasticsearch.Indices.ReceiptDetectionResults)
-	receiptImageRepo := repository.NewReceiptImageLocalStorage(config.Storage.Local.Directory, config.Storage.Local.ServerHost+config.Storage.Local.ServerStaticPath)
+	receiptImagesRepo := repository.NewReceiptImageLocalStorage(config.Storage.Local.Directory, config.Storage.Local.ServerHost+config.Storage.Local.ServerStaticPath)
 	cacheRepo := repository.NewCacheRedisRepo(repository.CacheRedisRepoOpt{
 		Client:                              redis,
 		ReceiptDetectionResultCacheDuration: time.Duration(config.Cache.Duration.ReceiptDetectionResult),
@@ -60,7 +60,7 @@ func newRouter(config *config.AppConfig) *gin.Engine {
 		OcrEngine:                     ocrEngine,
 		ReceiptDetectionHistoriesRepo: receiptDetectionHistoriesRepo,
 		ReceiptDetectionResultsRepo:   receiptDetectionResultsRepo,
-		ReceiptImageRepo:              receiptImageRepo,
+		ReceiptImagesRepo:             receiptImagesRepo,
 		MaxFileSizeMb:                 config.Ocr.MaxFileSize,
 		AllowedFileType:               config.Ocr.AllowedFileType,
 		CacheRepo:                     cacheRepo,
@@ -69,7 +69,7 @@ func newRouter(config *config.AppConfig) *gin.Engine {
 		BillRepo:                    billRepo,
 		BillItemRepo:                billItemRepo,
 		ReceiptDetectionHistoryRepo: receiptDetectionHistoriesRepo,
-		ReceiptImageRepo:            receiptImageRepo,
+		ReceiptImagesRepo:           receiptImagesRepo,
 		CacheRepo:                   cacheRepo,
 	})
 

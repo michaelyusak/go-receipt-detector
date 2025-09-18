@@ -21,7 +21,7 @@ type receiptDetection struct {
 	ocrEngine                     ocr.OcrEngine
 	receiptDetectionHistoriesRepo repository.ReceiptDetectionHistoriesRepository
 	receiptDetectionResultsRepo   repository.ReceiptDetectionResults
-	receiptImageRepo              repository.ReceiptImageRepository
+	receiptImagesRepo             repository.ReceiptImages
 	cacheRepo                     repository.CacheRepository
 
 	maxFileSizeMb   float64
@@ -35,7 +35,7 @@ type ReceiptDetectionResultsOpts struct {
 	OcrEngine                     ocr.OcrEngine
 	ReceiptDetectionHistoriesRepo repository.ReceiptDetectionHistoriesRepository
 	ReceiptDetectionResultsRepo   repository.ReceiptDetectionResults
-	ReceiptImageRepo              repository.ReceiptImageRepository
+	ReceiptImagesRepo             repository.ReceiptImages
 	CacheRepo                     repository.CacheRepository
 	MaxFileSizeMb                 float64
 	AllowedFileType               map[string]bool
@@ -52,7 +52,7 @@ func NewReceiptDetectionService(opts ReceiptDetectionResultsOpts) *receiptDetect
 		ocrEngine:                     opts.OcrEngine,
 		receiptDetectionHistoriesRepo: opts.ReceiptDetectionHistoriesRepo,
 		receiptDetectionResultsRepo:   opts.ReceiptDetectionResultsRepo,
-		receiptImageRepo:              opts.ReceiptImageRepo,
+		receiptImagesRepo:             opts.ReceiptImagesRepo,
 		cacheRepo:                     opts.CacheRepo,
 
 		maxFileSizeMb:   opts.MaxFileSizeMb,
@@ -100,7 +100,7 @@ func (s *receiptDetection) DetectAndStoreReceipt(ctx context.Context, file multi
 	go func() {
 		defer wg.Done()
 
-		name, err := s.receiptImageRepo.StoreOne(ctx, contentType, fileHeader)
+		name, err := s.receiptImagesRepo.StoreOne(ctx, contentType, fileHeader)
 		if err != nil {
 			errCh <- hApperror.InternalServerError(hApperror.AppErrorOpt{
 				Message: fmt.Sprintf("%s[receiptImageRepo.StoreOne] Failed to store image: %v", logHeading, err),
@@ -162,7 +162,7 @@ func (s *receiptDetection) DetectAndStoreReceipt(ctx context.Context, file multi
 			}).Errorf("%s[receiptDetectionHistoriesRepo.InsertOne] Failed to insert reciept detection history", logHeading)
 		}
 
-		imageUrl, err := s.receiptImageRepo.GetImageUrl(c, fileName)
+		imageUrl, err := s.receiptImagesRepo.GetImageUrl(c, fileName)
 		if err != nil {
 			logrus.WithFields(logrus.Fields{
 				"result_id": resultId,
@@ -233,7 +233,7 @@ func (s *receiptDetection) GetResult(ctx context.Context, resultId string) (*ent
 		})
 	}
 
-	imageUrl, err := s.receiptImageRepo.GetImageUrl(ctx, history.ImagePath)
+	imageUrl, err := s.receiptImagesRepo.GetImageUrl(ctx, history.ImagePath)
 	if err != nil {
 		return nil, hApperror.InternalServerError(hApperror.AppErrorOpt{
 			Message: fmt.Sprintf("%s[receiptImageRepo.GetImageUrl] Failed to get image url: %v [result_id: %s]", logHeading, err, resultId),

@@ -15,7 +15,7 @@ type bill struct {
 	billRepo                    repository.BillRepository
 	billItemRepo                repository.BillItemRepository
 	receiptDetectionHistoryRepo repository.ReceiptDetectionHistoriesRepository
-	receiptImageRepo            repository.ReceiptImageRepository
+	receiptImagesRepo           repository.ReceiptImages
 	cacheRepo                   repository.CacheRepository
 
 	logHeading string
@@ -25,7 +25,7 @@ type BillOpts struct {
 	BillRepo                    repository.BillRepository
 	BillItemRepo                repository.BillItemRepository
 	ReceiptDetectionHistoryRepo repository.ReceiptDetectionHistoriesRepository
-	ReceiptImageRepo            repository.ReceiptImageRepository
+	ReceiptImagesRepo           repository.ReceiptImages
 	CacheRepo                   repository.CacheRepository
 }
 
@@ -34,7 +34,7 @@ func NewBillService(opt BillOpts) *bill {
 		billRepo:                    opt.BillRepo,
 		billItemRepo:                opt.BillItemRepo,
 		receiptDetectionHistoryRepo: opt.ReceiptDetectionHistoryRepo,
-		receiptImageRepo:            opt.ReceiptImageRepo,
+		receiptImagesRepo:           opt.ReceiptImagesRepo,
 		cacheRepo:                   opt.CacheRepo,
 
 		logHeading: "[service][bill]",
@@ -116,7 +116,7 @@ func (s *bill) GetByBillId(ctx context.Context, billId int64) (*entity.Bill, []e
 		})
 	}
 
-	imageUrl, err := s.receiptImageRepo.GetImageUrl(ctx, history.ImagePath)
+	imageUrl, err := s.receiptImagesRepo.GetImageUrl(ctx, history.ImagePath)
 	if err != nil {
 		return nil, nil, hApperror.InternalServerError(hApperror.AppErrorOpt{
 			Message: fmt.Sprintf("%s[receiptImageRepo.GetImageUrl] Failed to get image url: %v [bill_id: %v]", logHeading, err, billId),
