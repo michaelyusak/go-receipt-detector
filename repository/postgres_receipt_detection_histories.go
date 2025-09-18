@@ -40,7 +40,7 @@ func (r *receiptDetectionHistoriesPostgresRepo) GetByResultId(ctx context.Contex
 		FROM receipt_detection_histories
 		WHERE result_id = $1
 			OR revision_id = $1
-			AND deleted_at IS NOT NULL
+			AND deleted_at IS NULL
 	`
 
 	var receiptDetectionHistory entity.ReceiptDetectionHistory
@@ -57,11 +57,11 @@ func (r *receiptDetectionHistoriesPostgresRepo) GetByResultId(ctx context.Contex
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return  nil, nil
+			return nil, nil
 		}
 
 		return nil, fmt.Errorf("[repository][receiptDetectionHistoriesRepo][GetByResultId][dbtx.QueryRowContext] %w", err)
 	}
 
-	return  &receiptDetectionHistory, nil
+	return &receiptDetectionHistory, nil
 }
