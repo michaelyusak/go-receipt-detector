@@ -19,9 +19,9 @@ import (
 
 type receiptDetection struct {
 	ocrEngine                     ocr.OcrEngine
-	receiptDetectionHistoriesRepo repository.ReceiptDetectionHistoriesRepository
-	receiptDetectionResultsRepo   repository.ReceiptDetectionResultsRepository
-	receiptImageRepo              repository.ReceiptImageRepository
+	receiptDetectionHistoriesRepo repository.ReceiptDetectionHistories
+	receiptDetectionResultsRepo   repository.ReceiptDetectionResults
+	receiptImagesRepo             repository.ReceiptImages
 	cacheRepo                     repository.CacheRepository
 
 	maxFileSizeMb   float64
@@ -33,9 +33,9 @@ type receiptDetection struct {
 
 type ReceiptDetectionResultsOpts struct {
 	OcrEngine                     ocr.OcrEngine
-	ReceiptDetectionHistoriesRepo repository.ReceiptDetectionHistoriesRepository
-	ReceiptDetectionResultsRepo   repository.ReceiptDetectionResultsRepository
-	ReceiptImageRepo              repository.ReceiptImageRepository
+	ReceiptDetectionHistoriesRepo repository.ReceiptDetectionHistories
+	ReceiptDetectionResultsRepo   repository.ReceiptDetectionResults
+	ReceiptImagesRepo             repository.ReceiptImages
 	CacheRepo                     repository.CacheRepository
 	MaxFileSizeMb                 float64
 	AllowedFileType               map[string]bool
@@ -44,7 +44,7 @@ type ReceiptDetectionResultsOpts struct {
 func NewReceiptDetectionService(opts ReceiptDetectionResultsOpts) *receiptDetection {
 	var allowedFileTypes []string
 
-	for k, _ := range opts.AllowedFileType {
+	for k := range opts.AllowedFileType {
 		allowedFileTypes = append(allowedFileTypes, k)
 	}
 
@@ -52,7 +52,7 @@ func NewReceiptDetectionService(opts ReceiptDetectionResultsOpts) *receiptDetect
 		ocrEngine:                     opts.OcrEngine,
 		receiptDetectionHistoriesRepo: opts.ReceiptDetectionHistoriesRepo,
 		receiptDetectionResultsRepo:   opts.ReceiptDetectionResultsRepo,
-		receiptImageRepo:              opts.ReceiptImageRepo,
+		receiptImagesRepo:             opts.ReceiptImagesRepo,
 		cacheRepo:                     opts.CacheRepo,
 
 		maxFileSizeMb:   opts.MaxFileSizeMb,
@@ -100,10 +100,10 @@ func (s *receiptDetection) DetectAndStoreReceipt(ctx context.Context, file multi
 	go func() {
 		defer wg.Done()
 
-		name, err := s.receiptImageRepo.StoreOne(ctx, contentType, fileHeader)
+		name, err := s.receiptImagesRepo.StoreOne(ctx, contentType, fileHeader)
 		if err != nil {
 			errCh <- hApperror.InternalServerError(hApperror.AppErrorOpt{
-				Message: fmt.Sprintf("%s[receiptImageRepo.StoreOne] Failed to store image: %v", logHeading, err),
+				Message: fmt.Sprintf("%s[receiptImagesRepo.StoreOne] Failed to store image: %v", logHeading, err),
 			})
 			return
 		}
@@ -162,12 +162,12 @@ func (s *receiptDetection) DetectAndStoreReceipt(ctx context.Context, file multi
 			}).Errorf("%s[receiptDetectionHistoriesRepo.InsertOne] Failed to insert reciept detection history", logHeading)
 		}
 
-		imageUrl, err := s.receiptImageRepo.GetImageUrl(c, fileName)
+		imageUrl, err := s.receiptImagesRepo.GetImageUrl(c, fileName)
 		if err != nil {
 			logrus.WithFields(logrus.Fields{
 				"result_id": resultId,
 				"error":     err,
-			}).Warnf("%s[receiptImageRepo.GetImageUrl] Failed to get image url", logHeading)
+			}).Warnf("%s[receiptImagesRepo.GetImageUrl] Failed to get image url", logHeading)
 		}
 
 		result := entity.ReceiptDetectionResult{
@@ -233,10 +233,10 @@ func (s *receiptDetection) GetResult(ctx context.Context, resultId string) (*ent
 		})
 	}
 
-	imageUrl, err := s.receiptImageRepo.GetImageUrl(ctx, history.ImagePath)
+	imageUrl, err := s.receiptImagesRepo.GetImageUrl(ctx, history.ImagePath)
 	if err != nil {
 		return nil, hApperror.InternalServerError(hApperror.AppErrorOpt{
-			Message: fmt.Sprintf("%s[receiptImageRepo.GetImageUrl] Failed to get image url: %v [result_id: %s]", logHeading, err, resultId),
+			Message: fmt.Sprintf("%s[receiptImagesRepo.GetImageUrl] Failed to get image url: %v [result_id: %s]", logHeading, err, resultId),
 		})
 	}
 

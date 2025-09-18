@@ -1,63 +1,110 @@
 package handler
 
 import (
-	"fmt"
-	"net/http"
+	"receipt-detector/entity"
 	"receipt-detector/service"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	hApperror "github.com/michaelyusak/go-helper/apperror"
-	hHelper "github.com/michaelyusak/go-helper/helper"
+	"github.com/michaelyusak/go-helper/helper"
 )
 
-type ReceiptHandler struct {
-	receiptDetectionService service.ReceiptDetection
+type Receipt struct {
+	receiptService service.Receipt
 }
 
-func NewReceipHandler(receiptDetectionService service.ReceiptDetection) *ReceiptHandler {
-	return &ReceiptHandler{
-		receiptDetectionService: receiptDetectionService,
+func NewReceipt(receiptService service.Receipt) *Receipt {
+	return &Receipt{
+		receiptService: receiptService,
 	}
 }
 
-func (h *ReceiptHandler) DetectReceipt(ctx *gin.Context) {
+func (h *Receipt) Create(ctx *gin.Context) {
 	ctx.Header("Content-Type", "application/json")
 
-	file, fileHeader, err := ctx.Request.FormFile("file")
-	if err != nil {
-		ctx.Error(hApperror.BadRequestError(hApperror.AppErrorOpt{
-			Code:    http.StatusUnprocessableEntity,
-			Message: fmt.Sprintf("Failed to read file from request: %v", err),
-		}))
-		return
-	}
-
-	data, err := h.receiptDetectionService.DetectAndStoreReceipt(ctx.Request.Context(), file, fileHeader)
+	var req entity.CreateReceiptRequest
+	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
 		ctx.Error(err)
 		return
 	}
 
-	hHelper.ResponseOK(ctx, data)
-}
-
-func (h *ReceiptHandler) GetByResultId(ctx *gin.Context) {
-	ctx.Header("Content-Type", "application/json")
-
-	resultId := ctx.Param("result_id")
-	if resultId == "" {
-		ctx.Error(hApperror.BadRequestError(hApperror.AppErrorOpt{
-			Code:            http.StatusBadRequest,
-			ResponseMessage: "result_id must be provided",
-		}))
-		return
-	}
-
-	data, err := h.receiptDetectionService.GetResult(ctx.Request.Context(), resultId)
+	receiptId, err := h.receiptService.CreateOne(ctx.Request.Context(), req.Receipt, req.DetectionResult)
 	if err != nil {
 		ctx.Error(err)
 		return
 	}
 
-	hHelper.ResponseOK(ctx, data)
+	helper.ResponseOK(ctx, entity.CreateReceiptResponse{
+		ReceiptId: receiptId,
+	})
+}
+
+func (h *Receipt) GetByReceiptId(ctx *gin.Context) {
+	ctx.Header("Content-Type", "application/json")
+
+	receiptIdStr := ctx.Param("receipt_id")
+	if receiptIdStr == "" {
+		ctx.Error(hApperror.BadRequestError(hApperror.AppErrorOpt{
+			ResponseMessage: "receipt_id must be provided",
+		}))
+		return
+	}
+
+	receiptId, err := strconv.Atoi(receiptIdStr)
+	if err != nil {
+		ctx.Error(hApperror.BadRequestError(hApperror.AppErrorOpt{
+			ResponseMessage: "receipt_id must be a number",
+		}))
+		return
+	}
+
+	receipt, receiptItems, err := h.receiptService.GetByReceiptId(ctx.Request.Context(), int64(receiptId))
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	helper.ResponseOK(ctx, entity.GetByReceiptIdResponse{
+		Receipt:      *receipt,
+		ReceiptItems: receiptItems,
+	})
+}
+
+func (h *Receipt) UpdateReceipt(ctx *gin.Context) {
+	ctx.Header("Content-Type", "application/json")
+
+	receiptIdStr := ctx.Param("receipt_id")
+	if receiptIdStr == "" {
+		ctx.Error(hApperror.BadRequestError(hApperror.AppErrorOpt{
+			ResponseMessage: "receipt_id must be provided",
+		}))
+		return
+	}
+
+	receiptId, err := strconv.Atoi(receiptIdStr)
+	if err != nil {
+		ctx.Error(hApperror.BadRequestError(hApperror.AppErrorOpt{
+			ResponseMessage: "receipt_id must be a number",
+		}))
+		return
+	}
+
+	var req entity.UpdateReceiptRequest
+	err = ctx.ShouldBindJSON(&req)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	req.ReceiptId = int64(receiptId)
+
+	err = h.receiptService.UpdateReceipt(ctx, req)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	helper.ResponseOK(ctx, nil)
 }

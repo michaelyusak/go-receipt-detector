@@ -11,8 +11,8 @@ type ReceiptDetection interface {
 	GetResult(ctx context.Context, resultId string) (*entity.ReceiptDetectionResult, error)
 }
 
-type Bill interface {
-	CreateOne(ctx context.Context, bill entity.Bill, detectionResult entity.DetectionResult) (int64, error)
-	GetByBillId(ctx context.Context, billId int64) (*entity.Bill, []entity.BillItem, error)
-	UpdateBill(ctx context.Context, newBill entity.UpdateBillRequest) error
+type Receipt interface {
+	CreateOne(ctx context.Context, bill entity.Receipt, detectionResult entity.DetectionResult) (int64, error)
+	GetByReceiptId(ctx context.Context, billId int64) (*entity.Receipt, []entity.ReceiptItem, error)
+	UpdateReceipt(ctx context.Context, newBill entity.UpdateReceiptRequest) error
 }

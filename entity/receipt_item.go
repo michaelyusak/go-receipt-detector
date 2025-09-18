@@ -1,8 +1,8 @@
 package entity
 
-type BillItem struct {
-	BillItemId        int64   `json:"bill_item_id"`
-	BillId            int64   `json:"bill_id"`
+type ReceiptItem struct {
+	ReceiptItemId     int64   `json:"receipt_item_id"`
+	ReceiptId         int64   `json:"receipt_id"`
 	ItemCategory      string  `json:"item_category"`
 	ItemName          string  `json:"item_name"`
 	ItemQuantity      *int    `json:"item_quantity"`

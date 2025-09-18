@@ -21,9 +21,9 @@ var (
 )
 
 type routerOpts struct {
-	common  *hHandler.CommonHandler
-	receipt *handler.ReceiptHandler
-	bill    *handler.BillHandler
+	common           *hHandler.CommonHandler
+	receiptDetection *handler.ReceiptDetection
+	receipt          *handler.Receipt
 }
 
 func newRouter(config *config.AppConfig) *gin.Engine {
@@ -42,17 +42,17 @@ func newRouter(config *config.AppConfig) *gin.Engine {
 	redis := adaptor.ConnectRedis(config.Redis)
 	logrus.Info("Connected to redis")
 
-	receiptDetectionHistoriesRepo := repository.NewReceiptDetectionHistoriesPostgresRepo(db)
-	receiptDetectionResultsRepo := repository.NewReceiptDetectionResultsElasticRepo(es, config.Elasticsearch.Indices.ReceiptDetectionResults)
-	receiptImageRepo := repository.NewReceiptImageLocalStorage(config.Storage.Local.Directory, config.Storage.Local.ServerHost+config.Storage.Local.ServerStaticPath)
+	receiptDetectionHistoriesRepo := repository.NewReceiptDetectionHistoriesPostgres(db)
+	receiptDetectionResultsRepo := repository.NewReceiptDetectionResultsElastic(es, config.Elasticsearch.Indices.ReceiptDetectionResults)
+	receiptImagesRepo := repository.NewReceiptImageLocalStorage(config.Storage.Local.Directory, config.Storage.Local.ServerHost+config.Storage.Local.ServerStaticPath)
 	cacheRepo := repository.NewCacheRedisRepo(repository.CacheRedisRepoOpt{
 		Client:                              redis,
 		ReceiptDetectionResultCacheDuration: time.Duration(config.Cache.Duration.ReceiptDetectionResult),
-		BillCacheDuration:                   time.Duration(config.Cache.Duration.Bill),
-		BillItemsCacheDuration:              time.Duration(config.Cache.Duration.BillItems),
+		ReceiptCacheDuration:                time.Duration(config.Cache.Duration.Receipt),
+		ReceiptItemsCacheDuration:           time.Duration(config.Cache.Duration.ReceiptItems),
 	})
-	billRepo := repository.NewBillPostgresRepo(db)
-	billItemRepo := repository.NewBillItemsPostgresRepo(db)
+	receiptsRepo := repository.NewReceiptsPostgres(db)
+	receiptItemsRepo := repository.NewReceiptItemsPostgres(db)
 
 	ocrEngine := ocr.NewOcEngineRestClient(config.Ocr.OcrEngine.BaseUrl)
 
@@ -60,27 +60,27 @@ func newRouter(config *config.AppConfig) *gin.Engine {
 		OcrEngine:                     ocrEngine,
 		ReceiptDetectionHistoriesRepo: receiptDetectionHistoriesRepo,
 		ReceiptDetectionResultsRepo:   receiptDetectionResultsRepo,
-		ReceiptImageRepo:              receiptImageRepo,
+		ReceiptImagesRepo:             receiptImagesRepo,
 		MaxFileSizeMb:                 config.Ocr.MaxFileSize,
 		AllowedFileType:               config.Ocr.AllowedFileType,
 		CacheRepo:                     cacheRepo,
 	})
-	billService := service.NewBillService(service.BillOpts{
-		BillRepo:                    billRepo,
-		BillItemRepo:                billItemRepo,
-		ReceiptDetectionHistoryRepo: receiptDetectionHistoriesRepo,
-		ReceiptImageRepo:            receiptImageRepo,
-		CacheRepo:                   cacheRepo,
+	receiptService := service.NewBillService(service.ReceiptOpts{
+		ReceiptsRepo:                  receiptsRepo,
+		ReceiptItemsRepo:              receiptItemsRepo,
+		ReceiptDetectionHistoriesRepo: receiptDetectionHistoriesRepo,
+		ReceiptImagesRepo:             receiptImagesRepo,
+		CacheRepo:                     cacheRepo,
 	})
 
 	commonHandler := hHandler.NewCommonHandler(&APP_HEALTHY)
-	receiptHandler := handler.NewReceipHandler(receiptDetectionService)
-	billHandler := handler.NewBillHandler(billService)
+	receiptDetectionHandler := handler.NewReceiptDetection(receiptDetectionService)
+	receiptHandler := handler.NewReceipt(receiptService)
 
 	return createRouter(routerOpts{
-		common:  commonHandler,
-		receipt: receiptHandler,
-		bill:    billHandler,
+		common:           commonHandler,
+		receiptDetection: receiptDetectionHandler,
+		receipt:          receiptHandler,
 	},
 		config.Cors.AllowedOrigins,
 		config.Storage.Local)
@@ -106,8 +106,8 @@ func createRouter(opts routerOpts, allowedOrigins []string, localStorageConfig c
 
 	corsRouting(router, corsConfig, allowedOrigins)
 	commonRouting(router, opts.common)
+	receiptDetectionRouting(router, opts.receiptDetection)
 	receiptRouting(router, opts.receipt)
-	billRouting(router, opts.bill)
 
 	return router
 }
@@ -130,17 +130,17 @@ func staticRouting(router *gin.Engine, localStorageStaticPath, localStorageDirec
 	router.Static(localStorageStaticPath, localStorageDirectory)
 }
 
-func receiptRouting(router *gin.Engine, handler *handler.ReceiptHandler) {
-	receiptRouter := router.Group("/receipt")
+func receiptDetectionRouting(router *gin.Engine, handler *handler.ReceiptDetection) {
+	receiptDetectionRouter := router.Group("/receipt/detect")
 
-	receiptRouter.POST("/detect", handler.DetectReceipt)
-	receiptRouter.GET("/:result_id", handler.GetByResultId)
+	receiptDetectionRouter.POST("", handler.DetectReceipt)
+	receiptDetectionRouter.GET("/:result_id", handler.GetByResultId)
 }
 
-func billRouting(router *gin.Engine, handler *handler.BillHandler) {
-	billRouter := router.Group("/bill")
+func receiptRouting(router *gin.Engine, handler *handler.Receipt) {
+	receiptRouter := router.Group("/receipt")
 
-	billRouter.POST("", handler.Create)
-	billRouter.GET("/:bill_id", handler.GetById)
-	billRouter.PATCH("/:bill_id", handler.UpdateBill)
+	receiptRouter.POST("", handler.Create)
+	receiptRouter.GET("/:receipt_id", handler.GetByReceiptId)
+	receiptRouter.PATCH("/:receipt_id", handler.UpdateReceipt)
 }
