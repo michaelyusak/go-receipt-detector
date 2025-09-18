@@ -11,12 +11,12 @@ import (
 )
 
 type ReceiptHandler struct {
-	receiptDetection service.ReceiptDetection
+	receiptDetectionService service.ReceiptDetection
 }
 
-func NewReceipHandler(receiptDetection service.ReceiptDetection) *ReceiptHandler {
+func NewReceipHandler(receiptDetectionService service.ReceiptDetection) *ReceiptHandler {
 	return &ReceiptHandler{
-		receiptDetection: receiptDetection,
+		receiptDetectionService: receiptDetectionService,
 	}
 }
 
@@ -32,7 +32,7 @@ func (h *ReceiptHandler) DetectReceipt(ctx *gin.Context) {
 		return
 	}
 
-	data, err := h.receiptDetection.DetectAndStoreReceipt(ctx.Request.Context(), file, fileHeader)
+	data, err := h.receiptDetectionService.DetectAndStoreReceipt(ctx.Request.Context(), file, fileHeader)
 	if err != nil {
 		ctx.Error(err)
 		return
@@ -43,17 +43,17 @@ func (h *ReceiptHandler) DetectReceipt(ctx *gin.Context) {
 
 func (h *ReceiptHandler) GetByResultId(ctx *gin.Context) {
 	ctx.Header("Content-Type", "application/json")
-	
+
 	resultId := ctx.Param("result_id")
 	if resultId == "" {
 		ctx.Error(hApperror.BadRequestError(hApperror.AppErrorOpt{
-			Code: http.StatusBadRequest,
+			Code:            http.StatusBadRequest,
 			ResponseMessage: "result_id must be provided",
 		}))
 		return
 	}
 
-	data, err := h.receiptDetection.GetResult(ctx.Request.Context(), resultId)
+	data, err := h.receiptDetectionService.GetResult(ctx.Request.Context(), resultId)
 	if err != nil {
 		ctx.Error(err)
 		return
