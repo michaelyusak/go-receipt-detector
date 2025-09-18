@@ -36,6 +36,12 @@ type CacheRepository interface {
 
 	SetReceiptDetectionResult(ctx context.Context, detectionResult entity.ReceiptDetectionResult) error
 	GetReceiptDetectionResult(ctx context.Context, resultId string) (*entity.ReceiptDetectionResult, error)
+
+	SetBillCache(ctx context.Context, bill entity.Bill) error
+	GetBillCache(ctx context.Context, billId int64) (*entity.Bill, error)
+
+	SetBillItemsCache(ctx context.Context, billId int64, billItems []entity.BillItem) error
+	GetBillItemsCache(ctx context.Context, billId int64) ([]entity.BillItem, error)
 }
 
 type BillRepository interface {

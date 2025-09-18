@@ -33,7 +33,9 @@
     },
     "cahce": {
         "duration": {
-            "receipt_detection_result": "5m"
+            "receipt_detection_result": "5m",
+            "bill": "5m",
+            "bill_items": "5m"
         }
     },
     "storage": {
