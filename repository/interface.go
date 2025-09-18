@@ -43,3 +43,8 @@ type BillRepository interface {
 	GetByBillId(ctx context.Context, billId int64) (*entity.Bill, error)
 	UpdateBill(ctx context.Context, newBill entity.UpdateBillRequest) error
 }
+
+type BillItemRepository interface {
+	InsertMany(ctx context.Context, billItems []entity.BillItem) error
+	GetByBillId(ctx context.Context, billId int64) ([]entity.BillItem, error)
+}
