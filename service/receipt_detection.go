@@ -17,8 +17,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var wg sync.WaitGroup
-
 type receiptDetection struct {
 	ocrEngine                     ocr.OcrEngine
 	receiptDetectionHistoriesRepo repository.ReceiptDetectionHistoriesRepository
@@ -92,13 +90,13 @@ func (s *receiptDetection) DetectAndStoreReceipt(ctx context.Context, file multi
 		})
 	}
 
+	var wg sync.WaitGroup
 	var fileName, resultId string
 	var itemDetails []entity.OcrEngineItemDetail
 
 	errCh := make(chan error, 2)
 
 	wg.Add(1)
-
 	go func() {
 		defer wg.Done()
 
@@ -114,7 +112,6 @@ func (s *receiptDetection) DetectAndStoreReceipt(ctx context.Context, file multi
 	}()
 
 	wg.Add(1)
-
 	go func() {
 		defer wg.Done()
 
