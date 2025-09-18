@@ -16,7 +16,7 @@ type PriceDetail struct {
 
 type OcrEngineItemDetailInfo struct {
 	Item  string      `json:"item"`
-	Qty   int         `json:"qty,omitempty"`
+	Qty   *int        `json:"qty,omitempty"`
 	Price PriceDetail `json:"price"`
 }
 
