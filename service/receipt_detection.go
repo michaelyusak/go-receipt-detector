@@ -20,7 +20,7 @@ import (
 type receiptDetection struct {
 	ocrEngine                     ocr.OcrEngine
 	receiptDetectionHistoriesRepo repository.ReceiptDetectionHistoriesRepository
-	receiptDetectionResultsRepo   repository.ReceiptDetectionResultsRepository
+	receiptDetectionResultsRepo   repository.ReceiptDetectionResults
 	receiptImageRepo              repository.ReceiptImageRepository
 	cacheRepo                     repository.CacheRepository
 
@@ -34,7 +34,7 @@ type receiptDetection struct {
 type ReceiptDetectionResultsOpts struct {
 	OcrEngine                     ocr.OcrEngine
 	ReceiptDetectionHistoriesRepo repository.ReceiptDetectionHistoriesRepository
-	ReceiptDetectionResultsRepo   repository.ReceiptDetectionResultsRepository
+	ReceiptDetectionResultsRepo   repository.ReceiptDetectionResults
 	ReceiptImageRepo              repository.ReceiptImageRepository
 	CacheRepo                     repository.CacheRepository
 	MaxFileSizeMb                 float64
@@ -44,7 +44,7 @@ type ReceiptDetectionResultsOpts struct {
 func NewReceiptDetectionService(opts ReceiptDetectionResultsOpts) *receiptDetection {
 	var allowedFileTypes []string
 
-	for k, _ := range opts.AllowedFileType {
+	for k := range opts.AllowedFileType {
 		allowedFileTypes = append(allowedFileTypes, k)
 	}
 

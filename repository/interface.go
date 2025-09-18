@@ -20,7 +20,7 @@ type ReceiptDetectionHistoriesRepository interface {
 	GetByResultId(ctx context.Context, resultId string) (*entity.ReceiptDetectionHistory, error)
 }
 
-type ReceiptDetectionResultsRepository interface {
+type ReceiptDetectionResults interface {
 	InsertOne(ctx context.Context, result []entity.OcrEngineItemDetail) (string, error)
 	GetByResultId(ctx context.Context, resultId string) ([]entity.OcrEngineItemDetail, error)
 }

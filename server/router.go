@@ -43,7 +43,7 @@ func newRouter(config *config.AppConfig) *gin.Engine {
 	logrus.Info("Connected to redis")
 
 	receiptDetectionHistoriesRepo := repository.NewReceiptDetectionHistoriesPostgresRepo(db)
-	receiptDetectionResultsRepo := repository.NewReceiptDetectionResultsElasticRepo(es, config.Elasticsearch.Indices.ReceiptDetectionResults)
+	receiptDetectionResultsRepo := repository.NewReceiptDetectionResultsElastic(es, config.Elasticsearch.Indices.ReceiptDetectionResults)
 	receiptImageRepo := repository.NewReceiptImageLocalStorage(config.Storage.Local.Directory, config.Storage.Local.ServerHost+config.Storage.Local.ServerStaticPath)
 	cacheRepo := repository.NewCacheRedisRepo(repository.CacheRedisRepoOpt{
 		Client:                              redis,
