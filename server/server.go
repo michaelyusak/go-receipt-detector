@@ -16,7 +16,7 @@ import (
 func Init() {
 	config, err := config.Init()
 	if err != nil {
-		panic(err)
+		logrus.Panic(err)
 	}
 
 	log.Init(config.LogLevel)
@@ -53,7 +53,7 @@ func Init() {
 	<-ctx.Done()
 
 	if err := srv.Shutdown(ctx); err != nil {
-		logrus.Fatalf("Server shut down: %s", err.Error())
+		logrus.Fatalf("Server shut down with error: %s", err.Error())
 	}
 
 	logrus.Info("Server shut down")

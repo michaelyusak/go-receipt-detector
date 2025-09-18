@@ -15,17 +15,17 @@ type DBTX interface {
 	QueryRowContext(context.Context, string, ...interface{}) *sql.Row
 }
 
-type ReceiptDetectionHistoriesRepository interface {
+type ReceiptDetectionHistories interface {
 	InsertOne(ctx context.Context, history entity.ReceiptDetectionHistory) error
 	GetByResultId(ctx context.Context, resultId string) (*entity.ReceiptDetectionHistory, error)
 }
 
-type ReceiptDetectionResultsRepository interface {
+type ReceiptDetectionResults interface {
 	InsertOne(ctx context.Context, result []entity.OcrEngineItemDetail) (string, error)
 	GetByResultId(ctx context.Context, resultId string) ([]entity.OcrEngineItemDetail, error)
 }
 
-type ReceiptImageRepository interface {
+type ReceiptImages interface {
 	StoreOne(ctx context.Context, contentType string, fileHeader *multipart.FileHeader) (string, error)
 	GetImageUrl(ctx context.Context, filePath string) (string, error)
 }
@@ -36,4 +36,21 @@ type CacheRepository interface {
 
 	SetReceiptDetectionResult(ctx context.Context, detectionResult entity.ReceiptDetectionResult) error
 	GetReceiptDetectionResult(ctx context.Context, resultId string) (*entity.ReceiptDetectionResult, error)
+
+	SetReceiptCache(ctx context.Context, receipt entity.Receipt) error
+	GetReceiptCache(ctx context.Context, receiptId int64) (*entity.Receipt, error)
+
+	SetReceiptItemsCache(ctx context.Context, receiptId int64, receiptItems []entity.ReceiptItem) error
+	GetReceiptItemsCache(ctx context.Context, receiptId int64) ([]entity.ReceiptItem, error)
+}
+
+type Receipts interface {
+	InsertOne(ctx context.Context, receipt entity.Receipt) (int64, error)
+	GetByReceiptId(ctx context.Context, receiptId int64) (*entity.Receipt, error)
+	UpdateReceipt(ctx context.Context, newReceipt entity.UpdateReceiptRequest) error
+}
+
+type ReceiptItems interface {
+	InsertMany(ctx context.Context, receiptItems []entity.ReceiptItem) error
+	GetByReceiptId(ctx context.Context, receiptId int64) ([]entity.ReceiptItem, error)
 }

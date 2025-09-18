@@ -9,17 +9,17 @@ import (
 	"receipt-detector/helper"
 )
 
-type receiptDetectionHistoriesPostgresRepo struct {
+type receiptDetectionHistoriesPostgres struct {
 	dbtx DBTX
 }
 
-func NewReceiptDetectionHistoriesPostgresRepo(dbtx DBTX) *receiptDetectionHistoriesPostgresRepo {
-	return &receiptDetectionHistoriesPostgresRepo{
+func NewReceiptDetectionHistoriesPostgres(dbtx DBTX) *receiptDetectionHistoriesPostgres {
+	return &receiptDetectionHistoriesPostgres{
 		dbtx: dbtx,
 	}
 }
 
-func (r *receiptDetectionHistoriesPostgresRepo) InsertOne(ctx context.Context, history entity.ReceiptDetectionHistory) error {
+func (r *receiptDetectionHistoriesPostgres) InsertOne(ctx context.Context, history entity.ReceiptDetectionHistory) error {
 	q := `
 		INSERT 
 		INTO receipt_detection_histories (image_path, result_id, created_at)
@@ -28,19 +28,19 @@ func (r *receiptDetectionHistoriesPostgresRepo) InsertOne(ctx context.Context, h
 
 	_, err := r.dbtx.ExecContext(ctx, q, history.ImagePath, history.ResultId, helper.NowUnixMilli())
 	if err != nil {
-		return fmt.Errorf("[repository][receiptDetectionHistoriesRepo][InsertOne][dbtx.ExecContext] %w", err)
+		return fmt.Errorf("[repository][receiptDetectionHistoriesPostgres][InsertOne][dbtx.ExecContext] %w", err)
 	}
 
 	return nil
 }
 
-func (r *receiptDetectionHistoriesPostgresRepo) GetByResultId(ctx context.Context, resultId string) (*entity.ReceiptDetectionHistory, error) {
+func (r *receiptDetectionHistoriesPostgres) GetByResultId(ctx context.Context, resultId string) (*entity.ReceiptDetectionHistory, error) {
 	q := `
 		SELECT receipt_detection_history_id, image_path, result_id, revision_id, is_approved, is_reviewed, created_at, updated_at
 		FROM receipt_detection_histories
 		WHERE result_id = $1
 			OR revision_id = $1
-			AND deleted_at IS NOT NULL
+			AND deleted_at IS NULL
 	`
 
 	var receiptDetectionHistory entity.ReceiptDetectionHistory
@@ -57,11 +57,11 @@ func (r *receiptDetectionHistoriesPostgresRepo) GetByResultId(ctx context.Contex
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return  nil, nil
+			return nil, nil
 		}
 
-		return nil, fmt.Errorf("[repository][receiptDetectionHistoriesRepo][GetByResultId][dbtx.QueryRowContext] %w", err)
+		return nil, fmt.Errorf("[repository][receiptDetectionHistoriesPostgres][GetByResultId][dbtx.QueryRowContext] %w", err)
 	}
 
-	return  &receiptDetectionHistory, nil
+	return &receiptDetectionHistory, nil
 }

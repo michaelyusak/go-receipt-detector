@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"receipt-detector/adaptor"
 	"receipt-detector/config"
 	"receipt-detector/external/ocr"
@@ -22,27 +21,38 @@ var (
 )
 
 type routerOpts struct {
-	common  *hHandler.CommonHandler
-	receipt *handler.ReceiptHandler
+	common           *hHandler.CommonHandler
+	receiptDetection *handler.ReceiptDetection
+	receipt          *handler.Receipt
 }
 
 func newRouter(config *config.AppConfig) *gin.Engine {
 	db, err := adaptor.ConnectPostgres(config.Db)
 	if err != nil {
-		panic(fmt.Sprintf("Failed to connect to db: %v", err))
+		logrus.Panicf("Failed to connect to db: %v", err)
 	}
+	logrus.Info("Connected to postgres")
 
 	es, err := adaptor.ConnectElastic(config.Elasticsearch)
 	if err != nil {
-		panic(fmt.Sprintf("Failed to connect to es: %v", err))
+		logrus.Panicf("Failed to connect to es: %v", err)
 	}
+	logrus.Info("Connected to elasticsearch")
 
 	redis := adaptor.ConnectRedis(config.Redis)
+	logrus.Info("Connected to redis")
 
-	receiptDetectionHistoriesRepo := repository.NewReceiptDetectionHistoriesPostgresRepo(db)
-	receiptDetectionResultsRepo := repository.NewReceiptDetectionResultsElasticRepo(es, config.Elasticsearch.Indices.ReceiptDetectionResults)
-	receiptImageRepo := repository.NewReceiptImageLocalStorage(config.Storage.Local.Directory, config.Storage.Local.ServerHost+config.Storage.Local.ServerStaticPath)
-	cacheRepo := repository.NewCacheRedisRepo(redis, time.Duration(config.Cache.Duration.ReceiptDetectionResult))
+	receiptDetectionHistoriesRepo := repository.NewReceiptDetectionHistoriesPostgres(db)
+	receiptDetectionResultsRepo := repository.NewReceiptDetectionResultsElastic(es, config.Elasticsearch.Indices.ReceiptDetectionResults)
+	receiptImagesRepo := repository.NewReceiptImageLocalStorage(config.Storage.Local.Directory, config.Storage.Local.ServerHost+config.Storage.Local.ServerStaticPath)
+	cacheRepo := repository.NewCacheRedisRepo(repository.CacheRedisRepoOpt{
+		Client:                              redis,
+		ReceiptDetectionResultCacheDuration: time.Duration(config.Cache.Duration.ReceiptDetectionResult),
+		ReceiptCacheDuration:                time.Duration(config.Cache.Duration.Receipt),
+		ReceiptItemsCacheDuration:           time.Duration(config.Cache.Duration.ReceiptItems),
+	})
+	receiptsRepo := repository.NewReceiptsPostgres(db)
+	receiptItemsRepo := repository.NewReceiptItemsPostgres(db)
 
 	ocrEngine := ocr.NewOcEngineRestClient(config.Ocr.OcrEngine.BaseUrl)
 
@@ -50,18 +60,27 @@ func newRouter(config *config.AppConfig) *gin.Engine {
 		OcrEngine:                     ocrEngine,
 		ReceiptDetectionHistoriesRepo: receiptDetectionHistoriesRepo,
 		ReceiptDetectionResultsRepo:   receiptDetectionResultsRepo,
-		ReceiptImageRepo:              receiptImageRepo,
+		ReceiptImagesRepo:             receiptImagesRepo,
 		MaxFileSizeMb:                 config.Ocr.MaxFileSize,
 		AllowedFileType:               config.Ocr.AllowedFileType,
 		CacheRepo:                     cacheRepo,
 	})
+	receiptService := service.NewBillService(service.ReceiptOpts{
+		ReceiptsRepo:                  receiptsRepo,
+		ReceiptItemsRepo:              receiptItemsRepo,
+		ReceiptDetectionHistoriesRepo: receiptDetectionHistoriesRepo,
+		ReceiptImagesRepo:             receiptImagesRepo,
+		CacheRepo:                     cacheRepo,
+	})
 
 	commonHandler := hHandler.NewCommonHandler(&APP_HEALTHY)
-	receiptHandler := handler.NewReceipHandler(receiptDetectionService)
+	receiptDetectionHandler := handler.NewReceiptDetection(receiptDetectionService)
+	receiptHandler := handler.NewReceipt(receiptService)
 
 	return createRouter(routerOpts{
-		common:  commonHandler,
-		receipt: receiptHandler,
+		common:           commonHandler,
+		receiptDetection: receiptDetectionHandler,
+		receipt:          receiptHandler,
 	},
 		config.Cors.AllowedOrigins,
 		config.Storage.Local)
@@ -87,6 +106,7 @@ func createRouter(opts routerOpts, allowedOrigins []string, localStorageConfig c
 
 	corsRouting(router, corsConfig, allowedOrigins)
 	commonRouting(router, opts.common)
+	receiptDetectionRouting(router, opts.receiptDetection)
 	receiptRouting(router, opts.receipt)
 
 	return router
@@ -110,9 +130,17 @@ func staticRouting(router *gin.Engine, localStorageStaticPath, localStorageDirec
 	router.Static(localStorageStaticPath, localStorageDirectory)
 }
 
-func receiptRouting(router *gin.Engine, handler *handler.ReceiptHandler) {
+func receiptDetectionRouting(router *gin.Engine, handler *handler.ReceiptDetection) {
+	receiptDetectionRouter := router.Group("/receipt/detect")
+
+	receiptDetectionRouter.POST("", handler.DetectReceipt)
+	receiptDetectionRouter.GET("/:result_id", handler.GetByResultId)
+}
+
+func receiptRouting(router *gin.Engine, handler *handler.Receipt) {
 	receiptRouter := router.Group("/receipt")
 
-	receiptRouter.POST("/detect", handler.DetectReceipt)
-	receiptRouter.GET("/:result_id", handler.GetByResultId)
+	receiptRouter.POST("", handler.Create)
+	receiptRouter.GET("/:receipt_id", handler.GetByReceiptId)
+	receiptRouter.PATCH("/:receipt_id", handler.UpdateReceipt)
 }

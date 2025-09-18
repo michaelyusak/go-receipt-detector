@@ -37,6 +37,8 @@ type ElasticSearchConfig struct {
 
 type CacheDurationConfig struct {
 	ReceiptDetectionResult hEntity.Duration `json:"receipt_detection_result"`
+	Receipt                hEntity.Duration `json:"receipt"`
+	ReceiptItems           hEntity.Duration `json:"receipt_items"`
 }
 
 type CacheConfig struct {

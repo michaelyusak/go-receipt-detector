@@ -7,6 +7,9 @@ import (
 var (
 	logLevels = map[string]logrus.Level{
 		"DEBUG": logrus.DebugLevel,
+		"INFO":  logrus.InfoLevel,
+		"WARN":  logrus.WarnLevel,
+		"ERROR": logrus.ErrorLevel,
 	}
 )
 

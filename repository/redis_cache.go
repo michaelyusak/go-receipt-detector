@@ -15,15 +15,26 @@ type cacheRedisRepo struct {
 	client *redis.Client
 
 	receiptDetectionResultCacheDuration time.Duration
+	receiptCacheDuration                time.Duration
+	receiptItemsCacheDuration           time.Duration
 
 	logHeading string
 }
 
-func NewCacheRedisRepo(client *redis.Client, receiptDetectionResultCacheDuration time.Duration) *cacheRedisRepo {
-	return &cacheRedisRepo{
-		client: client,
+type CacheRedisRepoOpt struct {
+	Client                              *redis.Client
+	ReceiptDetectionResultCacheDuration time.Duration
+	ReceiptCacheDuration                time.Duration
+	ReceiptItemsCacheDuration           time.Duration
+}
 
-		receiptDetectionResultCacheDuration: receiptDetectionResultCacheDuration,
+func NewCacheRedisRepo(opt CacheRedisRepoOpt) *cacheRedisRepo {
+	return &cacheRedisRepo{
+		client: opt.Client,
+
+		receiptDetectionResultCacheDuration: opt.ReceiptDetectionResultCacheDuration,
+		receiptCacheDuration:                opt.ReceiptCacheDuration,
+		receiptItemsCacheDuration:           opt.ReceiptItemsCacheDuration,
 
 		logHeading: "[repository][cacheRedisRepo]",
 	}
@@ -94,4 +105,86 @@ func (r *cacheRedisRepo) GetReceiptDetectionResult(ctx context.Context, resultId
 	}
 
 	return &detectionResult, nil
+}
+
+func (r *cacheRedisRepo) receiptCacheKey(receiptId int64) string {
+	return fmt.Sprintf("receipt:%v", receiptId)
+}
+
+func (r *cacheRedisRepo) SetReceiptCache(ctx context.Context, receipt entity.Receipt) error {
+	logHeading := r.logHeading + "[SetReceiptCache]"
+
+	data, err := json.Marshal(receipt)
+	if err != nil {
+		return fmt.Errorf("%s[json.Marshal] Failed to marshal receipt: %w [receipt_id: %v]", logHeading, err, receipt.ReceiptId)
+	}
+
+	return r.SetCache(
+		ctx,
+		r.receiptCacheKey(receipt.ReceiptId),
+		data,
+		r.receiptCacheDuration,
+	)
+}
+
+func (r *cacheRedisRepo) GetReceiptCache(ctx context.Context, receiptId int64) (*entity.Receipt, error) {
+	logHeading := r.logHeading + "[GetReceiptCache]"
+
+	data, err := r.GetCache(ctx, r.receiptCacheKey(receiptId))
+	if err != nil {
+		return nil, fmt.Errorf("%s[r.GetCache] Failed to get cache: %w [receipt_id: %v]", logHeading, err, receiptId)
+	}
+	if len(data) == 0 {
+		return nil, nil
+	}
+
+	var receipt entity.Receipt
+
+	err = json.Unmarshal(data, &receipt)
+	if err != nil {
+		return nil, fmt.Errorf("%s[json.Unmarshal] Failed to unmarshal data: %w [data: %v]", logHeading, err, data)
+	}
+
+	return &receipt, nil
+}
+
+func (r *cacheRedisRepo) receiptItemsCacheKey(receiptId int64) string {
+	return fmt.Sprintf("receipt_items:%v", receiptId)
+}
+
+func (r *cacheRedisRepo) SetReceiptItemsCache(ctx context.Context, receiptId int64, receiptItems []entity.ReceiptItem) error {
+	logHeading := r.logHeading + "[SetReceiptItemsCache]"
+
+	data, err := json.Marshal(receiptItems)
+	if err != nil {
+		return fmt.Errorf("%s[json.Marshal] Failed to marshal receipt: %w [receipt_id: %v]", logHeading, err, receiptId)
+	}
+
+	return r.SetCache(
+		ctx,
+		r.receiptItemsCacheKey(receiptId),
+		data,
+		r.receiptItemsCacheDuration,
+	)
+}
+
+func (r *cacheRedisRepo) GetReceiptItemsCache(ctx context.Context, receiptId int64) ([]entity.ReceiptItem, error) {
+	logHeading := r.logHeading + "[GetReceiptItemsCache]"
+
+	data, err := r.GetCache(ctx, r.receiptItemsCacheKey(receiptId))
+	if err != nil {
+		return nil, fmt.Errorf("%s[r.GetCache] Failed to get cache: %w [receipt_id: %v]", logHeading, err, receiptId)
+	}
+	if len(data) == 0 {
+		return nil, nil
+	}
+
+	var receiptItem []entity.ReceiptItem
+
+	err = json.Unmarshal(data, &receiptItem)
+	if err != nil {
+		return nil, fmt.Errorf("%s[json.Unmarshal] Failed to unmarshal data: %w [data: %v]", logHeading, err, data)
+	}
+
+	return receiptItem, nil
 }
