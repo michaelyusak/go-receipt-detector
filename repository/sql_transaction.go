@@ -9,7 +9,7 @@ type Transaction interface {
 	Begin() error
 	Rollback() error
 	Commit() error
-	ReceiptDetectionHistoriesPostgresTx() *receiptDetectionHistoriesPostgresRepo
+	ReceiptDetectionHistoriesPostgresTx() *receiptDetectionHistoriesPostgres
 }
 
 type sqlTransaction struct {
@@ -42,8 +42,8 @@ func (s *sqlTransaction) Commit() error {
 	return s.tx.Commit()
 }
 
-func (s *sqlTransaction) ReceiptDetectionHistoriesTx() *receiptDetectionHistoriesPostgresRepo {
-	return &receiptDetectionHistoriesPostgresRepo{
+func (s *sqlTransaction) ReceiptDetectionHistoriesTx() *receiptDetectionHistoriesPostgres {
+	return &receiptDetectionHistoriesPostgres{
 		dbtx: s.tx,
 	}
 }

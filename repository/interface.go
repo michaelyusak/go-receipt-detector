@@ -15,7 +15,7 @@ type DBTX interface {
 	QueryRowContext(context.Context, string, ...interface{}) *sql.Row
 }
 
-type ReceiptDetectionHistoriesRepository interface {
+type ReceiptDetectionHistories interface {
 	InsertOne(ctx context.Context, history entity.ReceiptDetectionHistory) error
 	GetByResultId(ctx context.Context, resultId string) (*entity.ReceiptDetectionHistory, error)
 }

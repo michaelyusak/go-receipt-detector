@@ -42,7 +42,7 @@ func newRouter(config *config.AppConfig) *gin.Engine {
 	redis := adaptor.ConnectRedis(config.Redis)
 	logrus.Info("Connected to redis")
 
-	receiptDetectionHistoriesRepo := repository.NewReceiptDetectionHistoriesPostgresRepo(db)
+	receiptDetectionHistoriesRepo := repository.NewReceiptDetectionHistoriesPostgres(db)
 	receiptDetectionResultsRepo := repository.NewReceiptDetectionResultsElastic(es, config.Elasticsearch.Indices.ReceiptDetectionResults)
 	receiptImagesRepo := repository.NewReceiptImageLocalStorage(config.Storage.Local.Directory, config.Storage.Local.ServerHost+config.Storage.Local.ServerStaticPath)
 	cacheRepo := repository.NewCacheRedisRepo(repository.CacheRedisRepoOpt{
@@ -66,11 +66,11 @@ func newRouter(config *config.AppConfig) *gin.Engine {
 		CacheRepo:                     cacheRepo,
 	})
 	billService := service.NewBillService(service.BillOpts{
-		BillRepo:                    billRepo,
-		BillItemRepo:                billItemRepo,
-		ReceiptDetectionHistoryRepo: receiptDetectionHistoriesRepo,
-		ReceiptImagesRepo:           receiptImagesRepo,
-		CacheRepo:                   cacheRepo,
+		BillRepo:                      billRepo,
+		BillItemRepo:                  billItemRepo,
+		ReceiptDetectionHistoriesRepo: receiptDetectionHistoriesRepo,
+		ReceiptImagesRepo:             receiptImagesRepo,
+		CacheRepo:                     cacheRepo,
 	})
 
 	commonHandler := hHandler.NewCommonHandler(&APP_HEALTHY)

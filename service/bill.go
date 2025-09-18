@@ -12,30 +12,30 @@ import (
 )
 
 type bill struct {
-	billRepo                    repository.BillRepository
-	billItemRepo                repository.BillItemRepository
-	receiptDetectionHistoryRepo repository.ReceiptDetectionHistoriesRepository
-	receiptImagesRepo           repository.ReceiptImages
-	cacheRepo                   repository.CacheRepository
+	billRepo                      repository.BillRepository
+	billItemRepo                  repository.BillItemRepository
+	receiptDetectionHistoriesRepo repository.ReceiptDetectionHistories
+	receiptImagesRepo             repository.ReceiptImages
+	cacheRepo                     repository.CacheRepository
 
 	logHeading string
 }
 
 type BillOpts struct {
-	BillRepo                    repository.BillRepository
-	BillItemRepo                repository.BillItemRepository
-	ReceiptDetectionHistoryRepo repository.ReceiptDetectionHistoriesRepository
-	ReceiptImagesRepo           repository.ReceiptImages
-	CacheRepo                   repository.CacheRepository
+	BillRepo                      repository.BillRepository
+	BillItemRepo                  repository.BillItemRepository
+	ReceiptDetectionHistoriesRepo repository.ReceiptDetectionHistories
+	ReceiptImagesRepo             repository.ReceiptImages
+	CacheRepo                     repository.CacheRepository
 }
 
 func NewBillService(opt BillOpts) *bill {
 	return &bill{
-		billRepo:                    opt.BillRepo,
-		billItemRepo:                opt.BillItemRepo,
-		receiptDetectionHistoryRepo: opt.ReceiptDetectionHistoryRepo,
-		receiptImagesRepo:           opt.ReceiptImagesRepo,
-		cacheRepo:                   opt.CacheRepo,
+		billRepo:                      opt.BillRepo,
+		billItemRepo:                  opt.BillItemRepo,
+		receiptDetectionHistoriesRepo: opt.ReceiptDetectionHistoriesRepo,
+		receiptImagesRepo:             opt.ReceiptImagesRepo,
+		cacheRepo:                     opt.CacheRepo,
 
 		logHeading: "[service][bill]",
 	}
@@ -109,17 +109,17 @@ func (s *bill) GetByBillId(ctx context.Context, billId int64) (*entity.Bill, []e
 		})
 	}
 
-	history, err := s.receiptDetectionHistoryRepo.GetByResultId(ctx, bill.ResultId)
+	history, err := s.receiptDetectionHistoriesRepo.GetByResultId(ctx, bill.ResultId)
 	if err != nil {
 		return nil, nil, hApperror.InternalServerError(hApperror.AppErrorOpt{
-			Message: fmt.Sprintf("%s[receiptDetectionHistoryRepo.GetByResultId] Failed to get detection history: %v [bill_id: %v]", logHeading, err, billId),
+			Message: fmt.Sprintf("%s[receiptDetectionHistoriesRepo.GetByResultId] Failed to get detection history: %v [bill_id: %v]", logHeading, err, billId),
 		})
 	}
 
 	imageUrl, err := s.receiptImagesRepo.GetImageUrl(ctx, history.ImagePath)
 	if err != nil {
 		return nil, nil, hApperror.InternalServerError(hApperror.AppErrorOpt{
-			Message: fmt.Sprintf("%s[receiptImageRepo.GetImageUrl] Failed to get image url: %v [bill_id: %v]", logHeading, err, billId),
+			Message: fmt.Sprintf("%s[receiptImagesRepo.GetImageUrl] Failed to get image url: %v [bill_id: %v]", logHeading, err, billId),
 		})
 	}
 

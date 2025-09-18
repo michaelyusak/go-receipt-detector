@@ -19,7 +19,7 @@ import (
 
 type receiptDetection struct {
 	ocrEngine                     ocr.OcrEngine
-	receiptDetectionHistoriesRepo repository.ReceiptDetectionHistoriesRepository
+	receiptDetectionHistoriesRepo repository.ReceiptDetectionHistories
 	receiptDetectionResultsRepo   repository.ReceiptDetectionResults
 	receiptImagesRepo             repository.ReceiptImages
 	cacheRepo                     repository.CacheRepository
@@ -33,7 +33,7 @@ type receiptDetection struct {
 
 type ReceiptDetectionResultsOpts struct {
 	OcrEngine                     ocr.OcrEngine
-	ReceiptDetectionHistoriesRepo repository.ReceiptDetectionHistoriesRepository
+	ReceiptDetectionHistoriesRepo repository.ReceiptDetectionHistories
 	ReceiptDetectionResultsRepo   repository.ReceiptDetectionResults
 	ReceiptImagesRepo             repository.ReceiptImages
 	CacheRepo                     repository.CacheRepository
@@ -103,7 +103,7 @@ func (s *receiptDetection) DetectAndStoreReceipt(ctx context.Context, file multi
 		name, err := s.receiptImagesRepo.StoreOne(ctx, contentType, fileHeader)
 		if err != nil {
 			errCh <- hApperror.InternalServerError(hApperror.AppErrorOpt{
-				Message: fmt.Sprintf("%s[receiptImageRepo.StoreOne] Failed to store image: %v", logHeading, err),
+				Message: fmt.Sprintf("%s[receiptImagesRepo.StoreOne] Failed to store image: %v", logHeading, err),
 			})
 			return
 		}
@@ -167,7 +167,7 @@ func (s *receiptDetection) DetectAndStoreReceipt(ctx context.Context, file multi
 			logrus.WithFields(logrus.Fields{
 				"result_id": resultId,
 				"error":     err,
-			}).Warnf("%s[receiptImageRepo.GetImageUrl] Failed to get image url", logHeading)
+			}).Warnf("%s[receiptImagesRepo.GetImageUrl] Failed to get image url", logHeading)
 		}
 
 		result := entity.ReceiptDetectionResult{
@@ -236,7 +236,7 @@ func (s *receiptDetection) GetResult(ctx context.Context, resultId string) (*ent
 	imageUrl, err := s.receiptImagesRepo.GetImageUrl(ctx, history.ImagePath)
 	if err != nil {
 		return nil, hApperror.InternalServerError(hApperror.AppErrorOpt{
-			Message: fmt.Sprintf("%s[receiptImageRepo.GetImageUrl] Failed to get image url: %v [result_id: %s]", logHeading, err, resultId),
+			Message: fmt.Sprintf("%s[receiptImagesRepo.GetImageUrl] Failed to get image url: %v [result_id: %s]", logHeading, err, resultId),
 		})
 	}
 
