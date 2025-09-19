@@ -23,14 +23,14 @@ func NewReceiptsPostgres(dbtx DBTX) *receiptsPostgres {
 func (r *receiptsPostgres) InsertOne(ctx context.Context, receipt entity.Receipt) (int64, error) {
 	q := `
 		INSERT
-		INTO receipts (receipt_name, receipt_date, result_id, created_at)
-		VALUES ($1, $2, $3, $4)
+		INTO receipts (receipt_name, receipt_date, result_id, device_id, created_at)
+		VALUES ($1, $2, $3, $4, $5)
 		RETURNING receipt_id
 	`
 
 	var receiptId int64
 
-	err := r.dbtx.QueryRowContext(ctx, q, receipt.ReceiptName, receipt.ReceiptDate, receipt.ResultId, helper.NowUnixMilli()).Scan(&receiptId)
+	err := r.dbtx.QueryRowContext(ctx, q, receipt.ReceiptName, receipt.ReceiptDate, receipt.ResultId, receipt.DeviceId, helper.NowUnixMilli()).Scan(&receiptId)
 	if err != nil {
 		return receiptId, fmt.Errorf("repository][receiptsPostgres][InsertOne][dbtx.ExecContext] %w", err)
 	}
@@ -38,17 +38,18 @@ func (r *receiptsPostgres) InsertOne(ctx context.Context, receipt entity.Receipt
 	return receiptId, nil
 }
 
-func (r *receiptsPostgres) GetByReceiptId(ctx context.Context, receiptId int64) (*entity.Receipt, error) {
+func (r *receiptsPostgres) GetByReceiptId(ctx context.Context, receiptId int64, deviceId string) (*entity.Receipt, error) {
 	q := `
 		SELECT receipt_id, receipt_name, receipt_date, result_id, created_at, updated_at
 		FROM receipts
 		WHERE receipt_id = $1
+			AND device_id = $2
 			AND deleted_at IS NULL
 	`
 
 	var receipt entity.Receipt
 
-	err := r.dbtx.QueryRowContext(ctx, q, receiptId).Scan(
+	err := r.dbtx.QueryRowContext(ctx, q, receiptId, deviceId).Scan(
 		&receipt.ReceiptId,
 		&receipt.ReceiptName,
 		&receipt.ReceiptDate,
