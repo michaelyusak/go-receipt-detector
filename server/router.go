@@ -12,6 +12,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	hHandler "github.com/michaelyusak/go-helper/handler"
+	hHelper "github.com/michaelyusak/go-helper/helper"
 	hMiddleware "github.com/michaelyusak/go-helper/middleware"
 	"github.com/sirupsen/logrus"
 )
@@ -24,6 +25,8 @@ type routerOpts struct {
 	common           *hHandler.CommonHandler
 	receiptDetection *handler.ReceiptDetection
 	receipt          *handler.Receipt
+
+	hash hHelper.HashHelper
 }
 
 func newRouter(config *config.AppConfig) *gin.Engine {
@@ -41,6 +44,8 @@ func newRouter(config *config.AppConfig) *gin.Engine {
 
 	redis := adaptor.ConnectRedis(config.Redis)
 	logrus.Info("Connected to redis")
+
+	hashHelper := hHelper.NewHashHelper(config.Hash)
 
 	receiptDetectionHistoriesRepo := repository.NewReceiptDetectionHistoriesPostgres(db)
 	receiptDetectionResultsRepo := repository.NewReceiptDetectionResultsElastic(es, config.Elasticsearch.Indices.ReceiptDetectionResults)
@@ -81,6 +86,8 @@ func newRouter(config *config.AppConfig) *gin.Engine {
 		common:           commonHandler,
 		receiptDetection: receiptDetectionHandler,
 		receipt:          receiptHandler,
+
+		hash: hashHelper,
 	},
 		config.Cors.AllowedOrigins,
 		config.Storage.Local)
@@ -93,7 +100,13 @@ func createRouter(opts routerOpts, allowedOrigins []string, localStorageConfig c
 
 	router.ContextWithFallback = true
 
+	authMiddleware := hMiddleware.NewAuth(hMiddleware.AuthOpt{
+		IsCheckDeviceId: true,
+		Hash: opts.hash,
+	})
+
 	router.Use(
+		authMiddleware.Auth(),
 		hMiddleware.Logger(logrus.New()),
 		hMiddleware.RequestIdHandlerMiddleware,
 		hMiddleware.ErrorHandlerMiddleware,

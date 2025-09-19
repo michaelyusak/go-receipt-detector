@@ -8,6 +8,7 @@ import (
 	"receipt-detector/helper"
 	"receipt-detector/repository"
 
+	hAppconstant "github.com/michaelyusak/go-helper/appconstant"
 	hApperror "github.com/michaelyusak/go-helper/apperror"
 )
 
@@ -67,6 +68,8 @@ func (s *receipt) CreateOne(ctx context.Context, receipt entity.Receipt, detecti
 		receipt.ReceiptDate = helper.NowUnixMilli()
 	}
 
+	receipt.DeviceId = ctx.Value(hAppconstant.DeviceIdKey).(string)
+
 	receiptId, err := s.receiptsRepo.InsertOne(ctx, receipt)
 	if err != nil {
 		return 0, hApperror.InternalServerError(hApperror.AppErrorOpt{
@@ -89,7 +92,9 @@ func (s *receipt) CreateOne(ctx context.Context, receipt entity.Receipt, detecti
 func (s *receipt) GetByReceiptId(ctx context.Context, receiptId int64) (*entity.Receipt, []entity.ReceiptItem, error) {
 	logHeading := s.logHeading + "[GetByReceiptId]"
 
-	receipt, err := s.receiptsRepo.GetByReceiptId(ctx, receiptId)
+	deviceId := ctx.Value(hAppconstant.DeviceIdKey).(string)
+
+	receipt, err := s.receiptsRepo.GetByReceiptId(ctx, receiptId, deviceId)
 	if err != nil {
 		return nil, nil, hApperror.InternalServerError(hApperror.AppErrorOpt{
 			Message: fmt.Sprintf("%s[receiptsRepo.GetByReceiptId] Failed to get receipt: %v [receipt_id: %v]", logHeading, err, receiptId),

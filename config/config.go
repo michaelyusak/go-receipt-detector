@@ -6,6 +6,7 @@ import (
 
 	hConfig "github.com/michaelyusak/go-helper/config"
 	hEntity "github.com/michaelyusak/go-helper/entity"
+	hHelper "github.com/michaelyusak/go-helper/helper"
 )
 
 type OcrEngineConfig struct {
@@ -67,6 +68,7 @@ type AppConfig struct {
 	Cache          CacheConfig         `json:"cache"`
 	Storage        StorageConfig       `json:"storage"`
 	Ocr            OcrConfig           `json:"ocr"`
+	Hash           hHelper.HashConfig  `json:"hash"`
 }
 
 func Init() (AppConfig, error) {

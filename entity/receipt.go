@@ -6,6 +6,7 @@ type Receipt struct {
 	ReceiptDate     int64  `json:"receipt_date"`
 	ReceiptImageUrl string `json:"receipt_image_url"`
 	ResultId        string `json:"result_id" binding:"required"`
+	DeviceId        string `json:"device_id,omitempty"`
 	CreatedAt       int64  `json:"created_at"`
 	UpdatedAt       *int64 `json:"updated_at"`
 	DeletedAt       *int64 `json:"deleted_at,omitempty"`

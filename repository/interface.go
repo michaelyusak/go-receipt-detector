@@ -46,7 +46,7 @@ type CacheRepository interface {
 
 type Receipts interface {
 	InsertOne(ctx context.Context, receipt entity.Receipt) (int64, error)
-	GetByReceiptId(ctx context.Context, receiptId int64) (*entity.Receipt, error)
+	GetByReceiptId(ctx context.Context, receiptId int64, deviceId string) (*entity.Receipt, error)
 	UpdateReceipt(ctx context.Context, newReceipt entity.UpdateReceiptRequest) error
 }
 
