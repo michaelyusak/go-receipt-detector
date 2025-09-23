@@ -16,6 +16,7 @@ type DBTX interface {
 }
 
 type ReceiptDetectionHistories interface {
+	NewTx(tx *sql.Tx) ReceiptDetectionHistories
 	InsertOne(ctx context.Context, history entity.ReceiptDetectionHistory) error
 	GetByResultId(ctx context.Context, resultId string) (*entity.ReceiptDetectionHistory, error)
 }
@@ -45,12 +46,20 @@ type CacheRepository interface {
 }
 
 type Receipts interface {
+	NewTx(tx *sql.Tx) Receipts
 	InsertOne(ctx context.Context, receipt entity.Receipt) (int64, error)
 	GetByReceiptId(ctx context.Context, receiptId int64, deviceId string) (*entity.Receipt, error)
 	UpdateReceipt(ctx context.Context, newReceipt entity.UpdateReceiptRequest) error
 }
 
 type ReceiptItems interface {
+	NewTx(tx *sql.Tx) ReceiptItems
 	InsertMany(ctx context.Context, receiptItems []entity.ReceiptItem) error
 	GetByReceiptId(ctx context.Context, receiptId int64) ([]entity.ReceiptItem, error)
+}
+
+type Transaction interface {
+	Begin() (*sql.Tx, error)
+	Rollback() error
+	Commit() error
 }

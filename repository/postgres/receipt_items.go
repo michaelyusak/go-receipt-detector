@@ -1,4 +1,4 @@
-package repository
+package postgres
 
 import (
 	"context"
@@ -7,20 +7,27 @@ import (
 	"fmt"
 	"receipt-detector/entity"
 	"receipt-detector/helper"
+	"receipt-detector/repository"
 	"strconv"
 )
 
-type receiptItemsPostgres struct {
-	dbtx DBTX
+type receiptItems struct {
+	dbtx repository.DBTX
 }
 
-func NewReceiptItemsPostgres(dbtx DBTX) *receiptItemsPostgres {
-	return &receiptItemsPostgres{
+func NewReceiptItems(dbtx repository.DBTX) *receiptItems {
+	return &receiptItems{
 		dbtx: dbtx,
 	}
 }
 
-func (r *receiptItemsPostgres) InsertMany(ctx context.Context, receiptItems []entity.ReceiptItem) error {
+func (r *receiptItems) NewTx(tx *sql.Tx) repository.ReceiptItems {
+	return &receiptItems{
+		dbtx: tx,
+	}
+}
+
+func (r *receiptItems) InsertMany(ctx context.Context, receiptItems []entity.ReceiptItem) error {
 	q := `
 		INSERT
 		INTO receipt_items (receipt_id, item_category, item_name, item_quantity, item_price_currency, item_price_numeric, created_at)
@@ -63,13 +70,13 @@ func (r *receiptItemsPostgres) InsertMany(ctx context.Context, receiptItems []en
 
 	_, err := r.dbtx.ExecContext(ctx, q, args...)
 	if err != nil {
-		return fmt.Errorf("repository][receiptItemsPostgres][InsertMany][dbtx.ExecContext] %w", err)
+		return fmt.Errorf("repository][receiptItems][InsertMany][dbtx.ExecContext] %w", err)
 	}
 
 	return nil
 }
 
-func (r *receiptItemsPostgres) GetByReceiptId(ctx context.Context, receiptId int64) ([]entity.ReceiptItem, error) {
+func (r *receiptItems) GetByReceiptId(ctx context.Context, receiptId int64) ([]entity.ReceiptItem, error) {
 	q := `
 		SELECT 
 			receipt_item_id,
@@ -94,7 +101,7 @@ func (r *receiptItemsPostgres) GetByReceiptId(ctx context.Context, receiptId int
 			return receiptItems, nil
 		}
 
-		return nil, fmt.Errorf("repository][receiptItemsPostgres][GetByReceiptId][dbtx.QueryContext] %w", err)
+		return nil, fmt.Errorf("repository][receiptItems][GetByReceiptId][dbtx.QueryContext] %w", err)
 	}
 
 	for rows.Next() {
@@ -112,7 +119,7 @@ func (r *receiptItemsPostgres) GetByReceiptId(ctx context.Context, receiptId int
 			&receiptItem.UpdatedAt,
 		)
 		if err != nil {
-			return receiptItems, fmt.Errorf("repository][receiptItemsPostgres][GetByReceiptId][rows.Scan] %w", err)
+			return receiptItems, fmt.Errorf("repository][receiptItems][GetByReceiptId][rows.Scan] %w", err)
 		}
 
 		receiptItems = append(receiptItems, receiptItem)

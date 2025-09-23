@@ -5,7 +5,10 @@ import (
 	"receipt-detector/config"
 	"receipt-detector/external/ocr"
 	"receipt-detector/handler"
-	"receipt-detector/repository"
+	"receipt-detector/repository/elasticsearch"
+	"receipt-detector/repository/localstorage"
+	"receipt-detector/repository/postgres"
+	"receipt-detector/repository/redis"
 	"receipt-detector/service"
 	"time"
 
@@ -42,22 +45,22 @@ func newRouter(config *config.AppConfig) *gin.Engine {
 	}
 	logrus.Info("Connected to elasticsearch")
 
-	redis := adaptor.ConnectRedis(config.Redis)
+	rds := adaptor.ConnectRedis(config.Redis)
 	logrus.Info("Connected to redis")
 
 	hashHelper := hHelper.NewHashHelper(config.Hash)
 
-	receiptDetectionHistoriesRepo := repository.NewReceiptDetectionHistoriesPostgres(db)
-	receiptDetectionResultsRepo := repository.NewReceiptDetectionResultsElastic(es, config.Elasticsearch.Indices.ReceiptDetectionResults)
-	receiptImagesRepo := repository.NewReceiptImageLocalStorage(config.Storage.Local.Directory, config.Storage.Local.ServerHost+config.Storage.Local.ServerStaticPath)
-	cacheRepo := repository.NewCacheRedisRepo(repository.CacheRedisRepoOpt{
-		Client:                              redis,
+	receiptDetectionHistoriesRepo := postgres.NewReceiptDetectionHistories(db)
+	receiptDetectionResultsRepo := elasticsearch.NewReceiptDetectionResults(es, config.Elasticsearch.Indices.ReceiptDetectionResults)
+	receiptImagesRepo := localstorage.NewReceiptImages(config.Storage.Local.Directory, config.Storage.Local.ServerHost+config.Storage.Local.ServerStaticPath)
+	cacheRepo := redis.NewCacheRedisRepo(redis.CacheRedisRepoOpt{
+		Client:                              rds,
 		ReceiptDetectionResultCacheDuration: time.Duration(config.Cache.Duration.ReceiptDetectionResult),
 		ReceiptCacheDuration:                time.Duration(config.Cache.Duration.Receipt),
 		ReceiptItemsCacheDuration:           time.Duration(config.Cache.Duration.ReceiptItems),
 	})
-	receiptsRepo := repository.NewReceiptsPostgres(db)
-	receiptItemsRepo := repository.NewReceiptItemsPostgres(db)
+	receiptsRepo := postgres.NewReceipts(db)
+	receiptItemsRepo := postgres.NewReceiptItems(db)
 
 	ocrEngine := ocr.NewOcEngineRestClient(config.Ocr.OcrEngine.BaseUrl)
 
@@ -102,7 +105,7 @@ func createRouter(opts routerOpts, allowedOrigins []string, localStorageConfig c
 
 	authMiddleware := hMiddleware.NewAuth(hMiddleware.AuthOpt{
 		IsCheckDeviceId: true,
-		Hash: opts.hash,
+		Hash:            opts.hash,
 	})
 
 	router.Use(

@@ -1,4 +1,4 @@
-package repository
+package postgres
 
 import (
 	"context"
@@ -7,19 +7,26 @@ import (
 	"fmt"
 	"receipt-detector/entity"
 	"receipt-detector/helper"
+	"receipt-detector/repository"
 )
 
-type receiptDetectionHistoriesPostgres struct {
-	dbtx DBTX
+type receiptDetectionHistories struct {
+	dbtx repository.DBTX
 }
 
-func NewReceiptDetectionHistoriesPostgres(dbtx DBTX) *receiptDetectionHistoriesPostgres {
-	return &receiptDetectionHistoriesPostgres{
+func NewReceiptDetectionHistories(dbtx repository.DBTX) *receiptDetectionHistories {
+	return &receiptDetectionHistories{
 		dbtx: dbtx,
 	}
 }
 
-func (r *receiptDetectionHistoriesPostgres) InsertOne(ctx context.Context, history entity.ReceiptDetectionHistory) error {
+func (r *receiptDetectionHistories) NewTx(tx *sql.Tx) repository.ReceiptDetectionHistories {
+	return &receiptDetectionHistories{
+		dbtx: tx,
+	}
+}
+
+func (r *receiptDetectionHistories) InsertOne(ctx context.Context, history entity.ReceiptDetectionHistory) error {
 	q := `
 		INSERT 
 		INTO receipt_detection_histories (image_path, result_id, created_at)
@@ -28,13 +35,13 @@ func (r *receiptDetectionHistoriesPostgres) InsertOne(ctx context.Context, histo
 
 	_, err := r.dbtx.ExecContext(ctx, q, history.ImagePath, history.ResultId, helper.NowUnixMilli())
 	if err != nil {
-		return fmt.Errorf("[repository][receiptDetectionHistoriesPostgres][InsertOne][dbtx.ExecContext] %w", err)
+		return fmt.Errorf("[repository][receiptDetectionHistories][InsertOne][dbtx.ExecContext] %w", err)
 	}
 
 	return nil
 }
 
-func (r *receiptDetectionHistoriesPostgres) GetByResultId(ctx context.Context, resultId string) (*entity.ReceiptDetectionHistory, error) {
+func (r *receiptDetectionHistories) GetByResultId(ctx context.Context, resultId string) (*entity.ReceiptDetectionHistory, error) {
 	q := `
 		SELECT receipt_detection_history_id, image_path, result_id, revision_id, is_approved, is_reviewed, created_at, updated_at
 		FROM receipt_detection_histories
@@ -60,7 +67,7 @@ func (r *receiptDetectionHistoriesPostgres) GetByResultId(ctx context.Context, r
 			return nil, nil
 		}
 
-		return nil, fmt.Errorf("[repository][receiptDetectionHistoriesPostgres][GetByResultId][dbtx.QueryRowContext] %w", err)
+		return nil, fmt.Errorf("[repository][receiptDetectionHistories][GetByResultId][dbtx.QueryRowContext] %w", err)
 	}
 
 	return &receiptDetectionHistory, nil
