@@ -22,7 +22,7 @@ type receiptDetection struct {
 	receiptDetectionHistoriesRepo repository.ReceiptDetectionHistories
 	receiptDetectionResultsRepo   repository.ReceiptDetectionResults
 	receiptImagesRepo             repository.ReceiptImages
-	cacheRepo                     repository.CacheRepository
+	cacheRepo                     repository.Cache
 
 	maxFileSizeMb   float64
 	allowedFileType map[string]bool
@@ -36,7 +36,7 @@ type ReceiptDetectionResultsOpts struct {
 	ReceiptDetectionHistoriesRepo repository.ReceiptDetectionHistories
 	ReceiptDetectionResultsRepo   repository.ReceiptDetectionResults
 	ReceiptImagesRepo             repository.ReceiptImages
-	CacheRepo                     repository.CacheRepository
+	CacheRepo                     repository.Cache
 	MaxFileSizeMb                 float64
 	AllowedFileType               map[string]bool
 }

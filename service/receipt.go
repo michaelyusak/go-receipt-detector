@@ -17,7 +17,7 @@ type receipt struct {
 	receiptItemsRepo              repository.ReceiptItems
 	receiptDetectionHistoriesRepo repository.ReceiptDetectionHistories
 	receiptImagesRepo             repository.ReceiptImages
-	cacheRepo                     repository.CacheRepository
+	cacheRepo                     repository.Cache
 
 	logHeading string
 }
@@ -27,7 +27,7 @@ type ReceiptOpts struct {
 	ReceiptItemsRepo              repository.ReceiptItems
 	ReceiptDetectionHistoriesRepo repository.ReceiptDetectionHistories
 	ReceiptImagesRepo             repository.ReceiptImages
-	CacheRepo                     repository.CacheRepository
+	CacheRepo                     repository.Cache
 }
 
 func NewBillService(opt ReceiptOpts) *receipt {

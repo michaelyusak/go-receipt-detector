@@ -53,11 +53,11 @@ func newRouter(config *config.AppConfig) *gin.Engine {
 	receiptDetectionHistoriesRepo := postgres.NewReceiptDetectionHistories(db)
 	receiptDetectionResultsRepo := elasticsearch.NewReceiptDetectionResults(es, config.Elasticsearch.Indices.ReceiptDetectionResults)
 	receiptImagesRepo := localstorage.NewReceiptImages(config.Storage.Local.Directory, config.Storage.Local.ServerHost+config.Storage.Local.ServerStaticPath)
-	cacheRepo := redis.NewCacheRedisRepo(redis.CacheRedisRepoOpt{
-		Client:                              rds,
-		ReceiptDetectionResultCacheDuration: time.Duration(config.Cache.Duration.ReceiptDetectionResult),
-		ReceiptCacheDuration:                time.Duration(config.Cache.Duration.Receipt),
-		ReceiptItemsCacheDuration:           time.Duration(config.Cache.Duration.ReceiptItems),
+	cacheRepo := redis.NewCache(redis.CacheOpt{
+		Client:                    rds,
+		ReceiptDetectionResultTTL: time.Duration(config.Cache.TTL.ReceiptDetectionResult),
+		ReceiptTTL:                time.Duration(config.Cache.TTL.Receipt),
+		ReceiptItemsTTL:           time.Duration(config.Cache.TTL.ReceiptItems),
 	})
 	receiptsRepo := postgres.NewReceipts(db)
 	receiptItemsRepo := postgres.NewReceiptItems(db)

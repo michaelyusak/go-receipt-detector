@@ -43,7 +43,7 @@ type CacheDurationConfig struct {
 }
 
 type CacheConfig struct {
-	Duration CacheDurationConfig `json:"duration"`
+	TTL CacheDurationConfig `json:"ttl"`
 }
 
 type LocalStorageConfig struct {
