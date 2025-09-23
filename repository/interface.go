@@ -63,3 +63,9 @@ type Transaction interface {
 	Rollback() error
 	Commit() error
 }
+
+type ReceiptParticipants interface {
+	NewTx(tx *sql.Tx) ReceiptParticipants
+	InsertMany(ctx context.Context, participants []entity.ReceiptParticipant) error
+	GetByReceiptId(ctx context.Context, receiptId int64) ([]entity.ReceiptParticipant, error)
+}
