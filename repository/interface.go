@@ -49,7 +49,7 @@ type Receipts interface {
 	NewTx(tx *sql.Tx) Receipts
 	InsertOne(ctx context.Context, receipt entity.Receipt) (int64, error)
 	GetByReceiptId(ctx context.Context, receiptId int64, deviceId string) (*entity.Receipt, error)
-	UpdateReceipt(ctx context.Context, newReceipt entity.UpdateReceiptRequest) error
+	UpdateOne(ctx context.Context, newReceipt entity.UpdateReceiptRequest) error
 }
 
 type ReceiptItems interface {
