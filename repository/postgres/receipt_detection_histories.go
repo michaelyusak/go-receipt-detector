@@ -35,7 +35,7 @@ func (r *receiptDetectionHistories) InsertOne(ctx context.Context, history entit
 
 	_, err := r.dbtx.ExecContext(ctx, q, history.ImagePath, history.ResultId, helper.NowUnixMilli())
 	if err != nil {
-		return fmt.Errorf("[repository][receiptDetectionHistories][InsertOne][dbtx.ExecContext] %w", err)
+		return fmt.Errorf("[repository][postgres][receiptDetectionHistories][InsertOne][dbtx.ExecContext] %w", err)
 	}
 
 	return nil
@@ -67,7 +67,7 @@ func (r *receiptDetectionHistories) GetByResultId(ctx context.Context, resultId 
 			return nil, nil
 		}
 
-		return nil, fmt.Errorf("[repository][receiptDetectionHistories][GetByResultId][dbtx.QueryRowContext] %w", err)
+		return nil, fmt.Errorf("[repository][postgres][receiptDetectionHistories][GetByResultId][dbtx.QueryRowContext] %w", err)
 	}
 
 	return &receiptDetectionHistory, nil
