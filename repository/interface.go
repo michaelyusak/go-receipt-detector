@@ -69,3 +69,9 @@ type ReceiptParticipants interface {
 	InsertMany(ctx context.Context, participants []entity.ReceiptParticipant) error
 	GetByReceiptId(ctx context.Context, receiptId int64) ([]entity.ReceiptParticipant, error)
 }
+
+type ParticipantContacts interface {
+	NewTx(tx *sql.Tx) ParticipantContacts
+	InsertMany(ctx context.Context, contacts []entity.ParticipantContact) error
+	GetByParticipantId(ctx context.Context, participantId int64) ([]entity.ParticipantContact, error)
+}
