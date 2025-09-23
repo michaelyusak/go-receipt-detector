@@ -22,12 +22,12 @@ type receiptDetection struct {
 	receiptDetectionHistoriesRepo repository.ReceiptDetectionHistories
 	receiptDetectionResultsRepo   repository.ReceiptDetectionResults
 	receiptImagesRepo             repository.ReceiptImages
-	cacheRepo                     repository.CacheRepository
+	cacheRepo                     repository.Cache
 
 	maxFileSizeMb   float64
 	allowedFileType map[string]bool
 
-	logHeading     string
+	logTag     string
 	allowedTypeStr string
 }
 
@@ -36,7 +36,7 @@ type ReceiptDetectionResultsOpts struct {
 	ReceiptDetectionHistoriesRepo repository.ReceiptDetectionHistories
 	ReceiptDetectionResultsRepo   repository.ReceiptDetectionResults
 	ReceiptImagesRepo             repository.ReceiptImages
-	CacheRepo                     repository.CacheRepository
+	CacheRepo                     repository.Cache
 	MaxFileSizeMb                 float64
 	AllowedFileType               map[string]bool
 }
@@ -59,17 +59,17 @@ func NewReceiptDetectionService(opts ReceiptDetectionResultsOpts) *receiptDetect
 		allowedFileType: opts.AllowedFileType,
 		allowedTypeStr:  strings.Join(allowedFileTypes, ", "),
 
-		logHeading: "[service][receiptDetection]",
+		logTag: "[service][receiptDetection]",
 	}
 }
 
 func (s *receiptDetection) DetectAndStoreReceipt(ctx context.Context, file multipart.File, fileHeader *multipart.FileHeader) (*entity.ReceiptDetectionResult, error) {
-	logHeading := s.logHeading + "[DetectAndStoreReceipt]"
+	logTag := s.logTag + "[DetectAndStoreReceipt]"
 
 	if fileHeader.Size > int64(s.maxFileSizeMb)*1024*1024 {
 		return nil, hApperror.BadRequestError(hApperror.AppErrorOpt{
 			Code:            http.StatusRequestEntityTooLarge,
-			Message:         fmt.Sprintf("%s File size too large", logHeading),
+			Message:         fmt.Sprintf("%s File size too large", logTag),
 			ResponseMessage: "File size too large",
 		})
 	}
@@ -78,14 +78,14 @@ func (s *receiptDetection) DetectAndStoreReceipt(ctx context.Context, file multi
 	if err != nil {
 		return nil, hApperror.BadRequestError(hApperror.AppErrorOpt{
 			Code:            http.StatusUnprocessableEntity,
-			Message:         fmt.Sprintf("%s[hHelper.FileTypeAllowed] Failed to detect file type: %v", logHeading, err),
+			Message:         fmt.Sprintf("%s[hHelper.FileTypeAllowed] Failed to detect file type: %v", logTag, err),
 			ResponseMessage: "Corrupted or invalid file",
 		})
 	}
 	if !fileTypeOk {
 		return nil, hApperror.BadRequestError(hApperror.AppErrorOpt{
 			Code:            http.StatusBadRequest,
-			Message:         fmt.Sprintf("%s File type not allowed: %s", logHeading, contentType),
+			Message:         fmt.Sprintf("%s File type not allowed: %s", logTag, contentType),
 			ResponseMessage: fmt.Sprintf("File type %s not allowed. List of allowed file types: %s", contentType, s.allowedTypeStr),
 		})
 	}
@@ -103,7 +103,7 @@ func (s *receiptDetection) DetectAndStoreReceipt(ctx context.Context, file multi
 		name, err := s.receiptImagesRepo.StoreOne(ctx, contentType, fileHeader)
 		if err != nil {
 			errCh <- hApperror.InternalServerError(hApperror.AppErrorOpt{
-				Message: fmt.Sprintf("%s[receiptImagesRepo.StoreOne] Failed to store image: %v", logHeading, err),
+				Message: fmt.Sprintf("%s[receiptImagesRepo.StoreOne] Failed to store image: %v", logTag, err),
 			})
 			return
 		}
@@ -118,7 +118,7 @@ func (s *receiptDetection) DetectAndStoreReceipt(ctx context.Context, file multi
 		details, err := s.ocrEngine.DetectReceipt(ctx, file, fileHeader)
 		if err != nil {
 			errCh <- hApperror.InternalServerError(hApperror.AppErrorOpt{
-				Message: fmt.Sprintf("%s[ocrEngine.DetectReceipt] Failed detect receipt: %v", logHeading, err),
+				Message: fmt.Sprintf("%s[ocrEngine.DetectReceipt] Failed detect receipt: %v", logTag, err),
 			})
 			return
 		}
@@ -126,7 +126,7 @@ func (s *receiptDetection) DetectAndStoreReceipt(ctx context.Context, file multi
 		id, err := s.receiptDetectionResultsRepo.InsertOne(ctx, details)
 		if err != nil {
 			errCh <- hApperror.InternalServerError(hApperror.AppErrorOpt{
-				Message: fmt.Sprintf("%s[receiptDetectionResultsRepo.InserOne] Failed to record ocr result: %v", logHeading, err),
+				Message: fmt.Sprintf("%s[receiptDetectionResultsRepo.InserOne] Failed to record ocr result: %v", logTag, err),
 			})
 			return
 		}
@@ -159,7 +159,7 @@ func (s *receiptDetection) DetectAndStoreReceipt(ctx context.Context, file multi
 				"filename":  fileName,
 				"result_id": resultId,
 				"error":     err,
-			}).Errorf("%s[receiptDetectionHistoriesRepo.InsertOne] Failed to insert reciept detection history", logHeading)
+			}).Errorf("%s[receiptDetectionHistoriesRepo.InsertOne] Failed to insert reciept detection history", logTag)
 		}
 
 		imageUrl, err := s.receiptImagesRepo.GetImageUrl(c, fileName)
@@ -167,7 +167,7 @@ func (s *receiptDetection) DetectAndStoreReceipt(ctx context.Context, file multi
 			logrus.WithFields(logrus.Fields{
 				"result_id": resultId,
 				"error":     err,
-			}).Warnf("%s[receiptImagesRepo.GetImageUrl] Failed to get image url", logHeading)
+			}).Warnf("%s[receiptImagesRepo.GetImageUrl] Failed to get image url", logTag)
 		}
 
 		result := entity.ReceiptDetectionResult{
@@ -181,7 +181,7 @@ func (s *receiptDetection) DetectAndStoreReceipt(ctx context.Context, file multi
 			logrus.WithFields(logrus.Fields{
 				"result_id": resultId,
 				"error":     err,
-			}).Warnf("%s[cacheRepo.SetReceiptDetectionResult] Failed to cache result", logHeading)
+			}).Warnf("%s[cacheRepo.SetReceiptDetectionResult] Failed to cache result", logTag)
 		}
 	}(fileName, resultId, itemDetails)
 
@@ -192,23 +192,23 @@ func (s *receiptDetection) DetectAndStoreReceipt(ctx context.Context, file multi
 }
 
 func (s *receiptDetection) GetResult(ctx context.Context, resultId string) (*entity.ReceiptDetectionResult, error) {
-	logHeading := s.logHeading + "[GetResult]"
+	logTag := s.logTag + "[GetResult]"
 
 	history, err := s.receiptDetectionHistoriesRepo.GetByResultId(ctx, resultId)
 	if err != nil {
 		return nil, hApperror.InternalServerError(hApperror.AppErrorOpt{
-			Message: fmt.Sprintf("%s[receiptDetectionHistoriesRepo.GetByResultId] Failed to get history: %v [result_id: %s]", logHeading, err, resultId),
+			Message: fmt.Sprintf("%s[receiptDetectionHistoriesRepo.GetByResultId] Failed to get history: %v [result_id: %s]", logTag, err, resultId),
 		})
 	}
 	if history == nil {
 		return nil, hApperror.BadRequestError(hApperror.AppErrorOpt{
 			Code:    http.StatusBadRequest,
-			Message: fmt.Sprintf("%s[NilHistory] History not found [result_id: %s]", logHeading, resultId),
+			Message: fmt.Sprintf("%s[NilHistory] History not found [result_id: %s]", logTag, resultId),
 		})
 	}
 
 	if history.ResultId == resultId && history.RevisionId != "" {
-		logrus.Infof("%s[RevisionExists] [requested_result_id: %s][revision_result_id: %s]", logHeading, history.ResultId, history.RevisionId)
+		logrus.Infof("%s[RevisionExists] [requested_result_id: %s][revision_result_id: %s]", logTag, history.ResultId, history.RevisionId)
 		resultId = history.RevisionId
 	}
 
@@ -217,26 +217,26 @@ func (s *receiptDetection) GetResult(ctx context.Context, resultId string) (*ent
 		logrus.WithFields(logrus.Fields{
 			"result_id": resultId,
 			"error":     err,
-		}).Errorf("%s[cacheRepo.GetReceiptDetectionResult] Failed to get data", logHeading)
+		}).Errorf("%s[cacheRepo.GetReceiptDetectionResult] Failed to get data", logTag)
 	}
 	if cachedResult != nil {
 		logrus.WithFields(logrus.Fields{
 			"result_id": resultId,
-		}).Infof("%s[CacheFound]", logHeading)
+		}).Infof("%s[CacheFound]", logTag)
 		return cachedResult, nil
 	}
 
 	result, err := s.receiptDetectionResultsRepo.GetByResultId(ctx, resultId)
 	if err != nil {
 		return nil, hApperror.InternalServerError(hApperror.AppErrorOpt{
-			Message: fmt.Sprintf("%s[receiptDetectionResultsRepo.GetByResultId] Failed to get result: %v [result_id: %s]", logHeading, err, resultId),
+			Message: fmt.Sprintf("%s[receiptDetectionResultsRepo.GetByResultId] Failed to get result: %v [result_id: %s]", logTag, err, resultId),
 		})
 	}
 
 	imageUrl, err := s.receiptImagesRepo.GetImageUrl(ctx, history.ImagePath)
 	if err != nil {
 		return nil, hApperror.InternalServerError(hApperror.AppErrorOpt{
-			Message: fmt.Sprintf("%s[receiptImagesRepo.GetImageUrl] Failed to get image url: %v [result_id: %s]", logHeading, err, resultId),
+			Message: fmt.Sprintf("%s[receiptImagesRepo.GetImageUrl] Failed to get image url: %v [result_id: %s]", logTag, err, resultId),
 		})
 	}
 
@@ -255,7 +255,7 @@ func (s *receiptDetection) GetResult(ctx context.Context, resultId string) (*ent
 			logrus.WithFields(logrus.Fields{
 				"result_id": detectionResult.ResultId,
 				"error":     err,
-			}).Errorf("%s[cacheRepo.SetReceiptDetectionResult] Failed to cache result", logHeading)
+			}).Errorf("%s[cacheRepo.SetReceiptDetectionResult] Failed to cache result", logTag)
 		}
 	}()
 

@@ -31,25 +31,25 @@ type ReceiptImages interface {
 	GetImageUrl(ctx context.Context, filePath string) (string, error)
 }
 
-type CacheRepository interface {
-	SetCache(ctx context.Context, key string, data []byte, duration time.Duration) error
-	GetCache(ctx context.Context, key string) ([]byte, error)
+type Cache interface {
+	Set(ctx context.Context, key string, data []byte, duration time.Duration) error
+	Get(ctx context.Context, key string) ([]byte, error)
 
 	SetReceiptDetectionResult(ctx context.Context, detectionResult entity.ReceiptDetectionResult) error
 	GetReceiptDetectionResult(ctx context.Context, resultId string) (*entity.ReceiptDetectionResult, error)
 
-	SetReceiptCache(ctx context.Context, receipt entity.Receipt) error
-	GetReceiptCache(ctx context.Context, receiptId int64) (*entity.Receipt, error)
+	SetReceipt(ctx context.Context, receipt entity.Receipt) error
+	GetReceipt(ctx context.Context, receiptId int64) (*entity.Receipt, error)
 
-	SetReceiptItemsCache(ctx context.Context, receiptId int64, receiptItems []entity.ReceiptItem) error
-	GetReceiptItemsCache(ctx context.Context, receiptId int64) ([]entity.ReceiptItem, error)
+	SetReceiptItems(ctx context.Context, receiptId int64, receiptItems []entity.ReceiptItem) error
+	GetReceiptItems(ctx context.Context, receiptId int64) ([]entity.ReceiptItem, error)
 }
 
 type Receipts interface {
 	NewTx(tx *sql.Tx) Receipts
 	InsertOne(ctx context.Context, receipt entity.Receipt) (int64, error)
 	GetByReceiptId(ctx context.Context, receiptId int64, deviceId string) (*entity.Receipt, error)
-	UpdateReceipt(ctx context.Context, newReceipt entity.UpdateReceiptRequest) error
+	UpdateOne(ctx context.Context, newReceipt entity.UpdateReceiptRequest) error
 }
 
 type ReceiptItems interface {

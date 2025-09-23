@@ -32,7 +32,7 @@
         "db": 0
     },
     "cahce": {
-        "duration": {
+        "ttl": {
             "receipt_detection_result": "5m",
             "bill": "5m",
             "bill_items": "5m"
