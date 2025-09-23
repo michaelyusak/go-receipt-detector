@@ -1,4 +1,4 @@
-package repository
+package localstorage
 
 import (
 	"context"
@@ -25,29 +25,29 @@ var (
 	}
 )
 
-type receiptImageLocalStorage struct {
+type receiptImages struct {
 	localDirectory string
 	serverBaseUrl  string
 }
 
-func NewReceiptImageLocalStorage(localDirectory, serverBaseUrl string) *receiptImageLocalStorage {
-	return &receiptImageLocalStorage{
+func NewReceiptImages(localDirectory, serverBaseUrl string) *receiptImages {
+	return &receiptImages{
 		localDirectory: localDirectory,
 		serverBaseUrl:  serverBaseUrl,
 	}
 }
 
-func (r *receiptImageLocalStorage) generateFilename(contentType string) (string, error) {
+func (r *receiptImages) generateFilename(contentType string) (string, error) {
 	ext, ok := mimeToExt[contentType]
 	if !ok {
-		return "", fmt.Errorf("[repository][checkLocalDirectory] Unallowed content type")
+		return "", fmt.Errorf("[repository][localstorage][receiptImages][checkLocalDirectory] Unallowed content type")
 	}
 
 	year, month, day := time.Now().Date()
 	dir := fmt.Sprintf("%s/%v-%v-%v", r.localDirectory, year, month, day)
 
 	if err := os.MkdirAll(dir, 0755); err != nil {
-		return "", fmt.Errorf("[repository][checkLocalDirectory][os.MkdirAll] Failed to create directory: %w [dir: %s]", err, dir)
+		return "", fmt.Errorf("[repository][localstorage][receiptImages][checkLocalDirectory][os.MkdirAll] Failed to create directory: %w [dir: %s]", err, dir)
 	}
 
 	fileName := fmt.Sprintf("%s/%s%s", dir, uuid.New().String(), ext)
@@ -55,33 +55,33 @@ func (r *receiptImageLocalStorage) generateFilename(contentType string) (string,
 	return fileName, nil
 }
 
-func (r *receiptImageLocalStorage) StoreOne(ctx context.Context, contentType string, fileHeader *multipart.FileHeader) (string, error) {
+func (r *receiptImages) StoreOne(ctx context.Context, contentType string, fileHeader *multipart.FileHeader) (string, error) {
 	fileName, err := r.generateFilename(contentType)
 	if err != nil {
-		return "", fmt.Errorf("[repository][StoreOne][r.checkLocalDirectory] Failed to generate file name : %w", err)
+		return "", fmt.Errorf("[repository][localstorage][StoreOne][r.generateFilename] Failed to generate file name : %w", err)
 	}
 
 	source, err := fileHeader.Open()
 	if err != nil {
-		return "", fmt.Errorf("[repository][StoreOne][fileHeader.Open] Failed to open source file: %w", err)
+		return "", fmt.Errorf("[repository][localstorage][StoreOne][fileHeader.Open] Failed to open source file: %w", err)
 	}
 	defer source.Close()
 
 	out, err := os.Create(fileName)
 	if err != nil {
-		return "", fmt.Errorf("[repository][StoreOne][os.Create] Failed to create out file: %w", err)
+		return "", fmt.Errorf("[repository][localstorage][StoreOne][os.Create] Failed to create out file: %w", err)
 	}
 	defer out.Close()
 
 	_, err = io.Copy(out, source)
 	if err != nil {
-		return "", fmt.Errorf("[repository][StoreOne][io.Copy] Failed to copy content to file: %w", err)
+		return "", fmt.Errorf("[repository][localstorage][StoreOne][io.Copy] Failed to copy content to file: %w", err)
 	}
 
 	return fileName, nil
 }
 
-func (r *receiptImageLocalStorage) GetImageUrl(ctx context.Context, filePath string) (string, error) {
+func (r *receiptImages) GetImageUrl(ctx context.Context, filePath string) (string, error) {
 	url := strings.Replace(filePath, r.localDirectory, r.serverBaseUrl, 1)
 
 	return url, nil

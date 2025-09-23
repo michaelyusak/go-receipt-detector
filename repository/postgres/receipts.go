@@ -1,4 +1,4 @@
-package repository
+package postgres
 
 import (
 	"context"
@@ -7,20 +7,27 @@ import (
 	"fmt"
 	"receipt-detector/entity"
 	"receipt-detector/helper"
+	"receipt-detector/repository"
 	"strconv"
 )
 
-type receiptsPostgres struct {
-	dbtx DBTX
+type receipts struct {
+	dbtx repository.DBTX
 }
 
-func NewReceiptsPostgres(dbtx DBTX) *receiptsPostgres {
-	return &receiptsPostgres{
+func NewReceipts(dbtx repository.DBTX) *receipts {
+	return &receipts{
 		dbtx: dbtx,
 	}
 }
 
-func (r *receiptsPostgres) InsertOne(ctx context.Context, receipt entity.Receipt) (int64, error) {
+func (r *receipts) NewTx(tx *sql.Tx) repository.Receipts {
+	return &receipts{
+		dbtx: tx,
+	}
+}
+
+func (r *receipts) InsertOne(ctx context.Context, receipt entity.Receipt) (int64, error) {
 	q := `
 		INSERT
 		INTO receipts (receipt_name, receipt_date, result_id, device_id, created_at)
@@ -32,13 +39,13 @@ func (r *receiptsPostgres) InsertOne(ctx context.Context, receipt entity.Receipt
 
 	err := r.dbtx.QueryRowContext(ctx, q, receipt.ReceiptName, receipt.ReceiptDate, receipt.ResultId, receipt.DeviceId, helper.NowUnixMilli()).Scan(&receiptId)
 	if err != nil {
-		return receiptId, fmt.Errorf("repository][receiptsPostgres][InsertOne][dbtx.ExecContext] %w", err)
+		return receiptId, fmt.Errorf("repository][receipts][InsertOne][dbtx.ExecContext] %w", err)
 	}
 
 	return receiptId, nil
 }
 
-func (r *receiptsPostgres) GetByReceiptId(ctx context.Context, receiptId int64, deviceId string) (*entity.Receipt, error) {
+func (r *receipts) GetByReceiptId(ctx context.Context, receiptId int64, deviceId string) (*entity.Receipt, error) {
 	q := `
 		SELECT receipt_id, receipt_name, receipt_date, result_id, created_at, updated_at
 		FROM receipts
@@ -62,13 +69,13 @@ func (r *receiptsPostgres) GetByReceiptId(ctx context.Context, receiptId int64, 
 			return nil, nil
 		}
 
-		return nil, fmt.Errorf("repository][receiptsPostgres][GetByReceiptId][dbtx.QueryRowContext] %w", err)
+		return nil, fmt.Errorf("repository][receipts][GetByReceiptId][dbtx.QueryRowContext] %w", err)
 	}
 
 	return &receipt, nil
 }
 
-func (r *receiptsPostgres) UpdateReceipt(ctx context.Context, newReceipt entity.UpdateReceiptRequest) error {
+func (r *receipts) UpdateReceipt(ctx context.Context, newReceipt entity.UpdateReceiptRequest) error {
 	q := `
 		UPDATE receipts
 		SET 
@@ -96,7 +103,7 @@ func (r *receiptsPostgres) UpdateReceipt(ctx context.Context, newReceipt entity.
 
 	_, err := r.dbtx.ExecContext(ctx, q, args...)
 	if err != nil {
-		return fmt.Errorf("repository][receiptsPostgres][UpdateReceipt][dbtx.ExecContext] %w", err)
+		return fmt.Errorf("repository][receipts][UpdateReceipt][dbtx.ExecContext] %w", err)
 	}
 
 	return nil
