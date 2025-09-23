@@ -134,5 +134,5 @@ func (s *receipt) GetByReceiptId(ctx context.Context, receiptId int64) (*entity.
 }
 
 func (s *receipt) UpdateReceipt(ctx context.Context, newReceipt entity.UpdateReceiptRequest) error {
-	return s.receiptsRepo.UpdateReceipt(ctx, newReceipt)
+	return s.receiptsRepo.UpdateOne(ctx, newReceipt)
 }
