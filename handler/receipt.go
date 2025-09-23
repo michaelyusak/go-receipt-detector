@@ -100,7 +100,7 @@ func (h *Receipt) UpdateReceipt(ctx *gin.Context) {
 
 	req.ReceiptId = int64(receiptId)
 
-	err = h.receiptService.UpdateReceipt(ctx, req)
+	err = h.receiptService.UpdateOne(ctx, req)
 	if err != nil {
 		ctx.Error(err)
 		return

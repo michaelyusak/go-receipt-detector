@@ -19,7 +19,7 @@ type receipt struct {
 	receiptImagesRepo             repository.ReceiptImages
 	cacheRepo                     repository.Cache
 
-	logHeading string
+	logTag string
 }
 
 type ReceiptOpts struct {
@@ -38,7 +38,7 @@ func NewBillService(opt ReceiptOpts) *receipt {
 		receiptImagesRepo:             opt.ReceiptImagesRepo,
 		cacheRepo:                     opt.CacheRepo,
 
-		logHeading: "[service][receipt]",
+		logTag: "[service][receipt]",
 	}
 }
 
@@ -62,7 +62,7 @@ func (s *receipt) convertDetectionResultToReceiptItems(detectionResult entity.De
 }
 
 func (s *receipt) CreateOne(ctx context.Context, receipt entity.Receipt, detectionResult entity.DetectionResult) (int64, error) {
-	logHeading := s.logHeading + "[CreateOne]"
+	logTag := s.logTag + "[CreateOne]"
 
 	if receipt.ReceiptDate == 0 {
 		receipt.ReceiptDate = helper.NowUnixMilli()
@@ -73,7 +73,7 @@ func (s *receipt) CreateOne(ctx context.Context, receipt entity.Receipt, detecti
 	receiptId, err := s.receiptsRepo.InsertOne(ctx, receipt)
 	if err != nil {
 		return 0, hApperror.InternalServerError(hApperror.AppErrorOpt{
-			Message: fmt.Sprintf("%s[receiptsRepo.InsertOne] Failed to insert receipt to postgres: %v [result_id: %s]", logHeading, err, receipt.ResultId),
+			Message: fmt.Sprintf("%s[receiptsRepo.InsertOne] Failed to insert receipt to postgres: %v [result_id: %s]", logTag, err, receipt.ResultId),
 		})
 	}
 
@@ -82,7 +82,7 @@ func (s *receipt) CreateOne(ctx context.Context, receipt entity.Receipt, detecti
 	err = s.receiptItemsRepo.InsertMany(ctx, receiptItems)
 	if err != nil {
 		return 0, hApperror.InternalServerError(hApperror.AppErrorOpt{
-			Message: fmt.Sprintf("%s[receiptItemsRepo.InsertMany] Failed to insert receipt items to postgres %v [receipt_id: %v]", logHeading, err, receiptId),
+			Message: fmt.Sprintf("%s[receiptItemsRepo.InsertMany] Failed to insert receipt items to postgres %v [receipt_id: %v]", logTag, err, receiptId),
 		})
 	}
 
@@ -90,14 +90,14 @@ func (s *receipt) CreateOne(ctx context.Context, receipt entity.Receipt, detecti
 }
 
 func (s *receipt) GetByReceiptId(ctx context.Context, receiptId int64) (*entity.Receipt, []entity.ReceiptItem, error) {
-	logHeading := s.logHeading + "[GetByReceiptId]"
+	logTag := s.logTag + "[GetByReceiptId]"
 
 	deviceId := ctx.Value(hAppconstant.DeviceIdKey).(string)
 
 	receipt, err := s.receiptsRepo.GetByReceiptId(ctx, receiptId, deviceId)
 	if err != nil {
 		return nil, nil, hApperror.InternalServerError(hApperror.AppErrorOpt{
-			Message: fmt.Sprintf("%s[receiptsRepo.GetByReceiptId] Failed to get receipt: %v [receipt_id: %v]", logHeading, err, receiptId),
+			Message: fmt.Sprintf("%s[receiptsRepo.GetByReceiptId] Failed to get receipt: %v [receipt_id: %v]", logTag, err, receiptId),
 		})
 	}
 	if receipt == nil {
@@ -110,21 +110,21 @@ func (s *receipt) GetByReceiptId(ctx context.Context, receiptId int64) (*entity.
 	receiptItems, err := s.receiptItemsRepo.GetByReceiptId(ctx, receiptId)
 	if err != nil {
 		return nil, nil, hApperror.InternalServerError(hApperror.AppErrorOpt{
-			Message: fmt.Sprintf("%s[billItemRepo.GetByBillId] Failed to get receipt items: %v [receipt_id: %v]", logHeading, err, receiptId),
+			Message: fmt.Sprintf("%s[billItemRepo.GetByBillId] Failed to get receipt items: %v [receipt_id: %v]", logTag, err, receiptId),
 		})
 	}
 
 	history, err := s.receiptDetectionHistoriesRepo.GetByResultId(ctx, receipt.ResultId)
 	if err != nil {
 		return nil, nil, hApperror.InternalServerError(hApperror.AppErrorOpt{
-			Message: fmt.Sprintf("%s[receiptDetectionHistoriesRepo.GetByResultId] Failed to get detection history: %v [receipt_id: %v]", logHeading, err, receiptId),
+			Message: fmt.Sprintf("%s[receiptDetectionHistoriesRepo.GetByResultId] Failed to get detection history: %v [receipt_id: %v]", logTag, err, receiptId),
 		})
 	}
 
 	imageUrl, err := s.receiptImagesRepo.GetImageUrl(ctx, history.ImagePath)
 	if err != nil {
 		return nil, nil, hApperror.InternalServerError(hApperror.AppErrorOpt{
-			Message: fmt.Sprintf("%s[receiptImagesRepo.GetImageUrl] Failed to get image url: %v [receipt_id: %v]", logHeading, err, receiptId),
+			Message: fmt.Sprintf("%s[receiptImagesRepo.GetImageUrl] Failed to get image url: %v [receipt_id: %v]", logTag, err, receiptId),
 		})
 	}
 
@@ -133,6 +133,6 @@ func (s *receipt) GetByReceiptId(ctx context.Context, receiptId int64) (*entity.
 	return receipt, receiptItems, nil
 }
 
-func (s *receipt) UpdateReceipt(ctx context.Context, newReceipt entity.UpdateReceiptRequest) error {
+func (s *receipt) UpdateOne(ctx context.Context, newReceipt entity.UpdateReceiptRequest) error {
 	return s.receiptsRepo.UpdateOne(ctx, newReceipt)
 }
