@@ -5,6 +5,7 @@ import (
 	"receipt-detector/config"
 	"receipt-detector/external/ocr"
 	"receipt-detector/handler"
+	"receipt-detector/repository"
 	"receipt-detector/repository/elasticsearch"
 	"receipt-detector/repository/localstorage"
 	"receipt-detector/repository/postgres"
@@ -25,9 +26,10 @@ var (
 )
 
 type routerOpts struct {
-	common           *hHandler.CommonHandler
-	receiptDetection *handler.ReceiptDetection
-	receipt          *handler.Receipt
+	common             *hHandler.CommonHandler
+	receiptDetection   *handler.ReceiptDetection
+	receipt            *handler.Receipt
+	receiptParticipant *handler.ReceiptParticipant
 
 	hash hHelper.HashHelper
 }
@@ -50,6 +52,8 @@ func newRouter(config *config.AppConfig) *gin.Engine {
 
 	hashHelper := hHelper.NewHashHelper(config.Hash)
 
+	transaction := repository.NewSqlTransaction(db)
+
 	receiptDetectionHistoriesRepo := postgres.NewReceiptDetectionHistories(db)
 	receiptDetectionResultsRepo := elasticsearch.NewReceiptDetectionResults(es, config.Elasticsearch.Indices.ReceiptDetectionResults)
 	receiptImagesRepo := localstorage.NewReceiptImages(config.Storage.Local.Directory, config.Storage.Local.ServerHost+config.Storage.Local.ServerStaticPath)
@@ -61,6 +65,8 @@ func newRouter(config *config.AppConfig) *gin.Engine {
 	})
 	receiptsRepo := postgres.NewReceipts(db)
 	receiptItemsRepo := postgres.NewReceiptItems(db)
+	receiptParticipantsRepo := postgres.NewReceiptParticipants(db)
+	participantContactsRepo := postgres.NewParticipantContacts(db)
 
 	ocrEngine := ocr.NewOcEngineRestClient(config.Ocr.OcrEngine.BaseUrl)
 
@@ -80,15 +86,23 @@ func newRouter(config *config.AppConfig) *gin.Engine {
 		ReceiptImagesRepo:             receiptImagesRepo,
 		CacheRepo:                     cacheRepo,
 	})
+	receiptParticipantService := service.NewReceiptParticipant(service.ReceiptParticipantOpt{
+		ReceiptParticipantsRepo: receiptParticipantsRepo,
+		ParticipantContactsRepo: participantContactsRepo,
+		ReceiptsRepo:            receiptsRepo,
+		Transaction:             transaction,
+	})
 
 	commonHandler := hHandler.NewCommonHandler(&APP_HEALTHY)
 	receiptDetectionHandler := handler.NewReceiptDetection(receiptDetectionService)
 	receiptHandler := handler.NewReceipt(receiptService)
+	receiptParticipantHandler := handler.NewReceiptParticipant(receiptParticipantService)
 
 	return createRouter(routerOpts{
-		common:           commonHandler,
-		receiptDetection: receiptDetectionHandler,
-		receipt:          receiptHandler,
+		common:             commonHandler,
+		receiptDetection:   receiptDetectionHandler,
+		receipt:            receiptHandler,
+		receiptParticipant: receiptParticipantHandler,
 
 		hash: hashHelper,
 	},
@@ -103,13 +117,7 @@ func createRouter(opts routerOpts, allowedOrigins []string, localStorageConfig c
 
 	router.ContextWithFallback = true
 
-	authMiddleware := hMiddleware.NewAuth(hMiddleware.AuthOpt{
-		IsCheckDeviceId: true,
-		Hash:            opts.hash,
-	})
-
 	router.Use(
-		authMiddleware.Auth(),
 		hMiddleware.Logger(logrus.New()),
 		hMiddleware.RequestIdHandlerMiddleware,
 		hMiddleware.ErrorHandlerMiddleware,
@@ -123,7 +131,8 @@ func createRouter(opts routerOpts, allowedOrigins []string, localStorageConfig c
 	corsRouting(router, corsConfig, allowedOrigins)
 	commonRouting(router, opts.common)
 	receiptDetectionRouting(router, opts.receiptDetection)
-	receiptRouting(router, opts.receipt)
+	receiptRouting(router, opts.receipt, opts.hash)
+	receiptParticipantRouting(router, opts.receiptParticipant, opts.hash)
 
 	return router
 }
@@ -153,10 +162,27 @@ func receiptDetectionRouting(router *gin.Engine, handler *handler.ReceiptDetecti
 	receiptDetectionRouter.GET("/:result_id", handler.GetByResultId)
 }
 
-func receiptRouting(router *gin.Engine, handler *handler.Receipt) {
+func receiptRouting(router *gin.Engine, handler *handler.Receipt, hash hHelper.HashHelper) {
 	receiptRouter := router.Group("/receipt")
 
-	receiptRouter.POST("", handler.Create)
-	receiptRouter.GET("/:receipt_id", handler.GetByReceiptId)
-	receiptRouter.PATCH("/:receipt_id", handler.UpdateReceipt)
+	deviceIdMiddleware := hMiddleware.NewAuth(hMiddleware.AuthOpt{
+		IsCheckDeviceId: true,
+		Hash:            hash,
+	}).Auth()
+
+	receiptRouter.POST("", deviceIdMiddleware, handler.Create)
+	receiptRouter.GET("/:receipt_id", deviceIdMiddleware, handler.GetByReceiptId)
+	receiptRouter.PATCH("/:receipt_id", deviceIdMiddleware, handler.UpdateReceipt)
+}
+
+func receiptParticipantRouting(router *gin.Engine, handler *handler.ReceiptParticipant, hash hHelper.HashHelper) {
+	receiptParticipantRouter := router.Group("/receipt/:receipt_id/participant")
+
+	deviceIdMiddleware := hMiddleware.NewAuth(hMiddleware.AuthOpt{
+		IsCheckDeviceId: true,
+		Hash:            hash,
+	}).Auth()
+
+	receiptParticipantRouter.POST("", deviceIdMiddleware, handler.AddParticipants)
+	receiptParticipantRouter.GET("", deviceIdMiddleware, handler.GetParticipants)
 }
