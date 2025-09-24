@@ -70,7 +70,7 @@ func (r *receiptItems) InsertMany(ctx context.Context, receiptItems []entity.Rec
 
 	_, err := r.dbtx.ExecContext(ctx, q, args...)
 	if err != nil {
-		return fmt.Errorf("repository][postgres][receiptItems][InsertMany][dbtx.ExecContext] %w", err)
+		return fmt.Errorf("[repository][postgres][receiptItems][InsertMany][dbtx.ExecContext] %w", err)
 	}
 
 	return nil
@@ -101,7 +101,7 @@ func (r *receiptItems) GetByReceiptId(ctx context.Context, receiptId int64) ([]e
 			return receiptItems, nil
 		}
 
-		return nil, fmt.Errorf("repository][postgres][receiptItems][GetByReceiptId][dbtx.QueryContext] %w", err)
+		return nil, fmt.Errorf("[repository][postgres][receiptItems][GetByReceiptId][dbtx.QueryContext] %w", err)
 	}
 
 	for rows.Next() {
@@ -119,7 +119,7 @@ func (r *receiptItems) GetByReceiptId(ctx context.Context, receiptId int64) ([]e
 			&receiptItem.UpdatedAt,
 		)
 		if err != nil {
-			return receiptItems, fmt.Errorf("repository][postgres][receiptItems][GetByReceiptId][rows.Scan] %w", err)
+			return receiptItems, fmt.Errorf("[repository][postgres][receiptItems][GetByReceiptId][rows.Scan] %w", err)
 		}
 
 		receiptItems = append(receiptItems, receiptItem)
