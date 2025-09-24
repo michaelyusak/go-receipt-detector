@@ -44,7 +44,7 @@ func (r *participantContacts) InsertMany(ctx context.Context, contacts []entity.
 		contactValueIdx := strconv.Itoa(offset + 3)
 		createdAtIdx := strconv.Itoa(offset + 4)
 
-		q := `($` + participantIdIdx +
+		q += `($` + participantIdIdx +
 			`, $` + contactTypeIdx +
 			`, $` + contactValueIdx +
 			`, $` + createdAtIdx + `)`
@@ -59,9 +59,13 @@ func (r *participantContacts) InsertMany(ctx context.Context, contacts []entity.
 		args = append(args, now)
 	}
 
+	q += `
+		ON CONFLICT (participant_id, contact_type, contact_value) DO NOTHING
+	`
+
 	_, err := r.dbtx.ExecContext(ctx, q, args...)
 	if err != nil {
-		return fmt.Errorf("repository][postgres][participantContacts][InsertMany][dbtx.ExecContext] %w", err)
+		return fmt.Errorf("[repository][postgres][participantContacts][InsertMany][dbtx.ExecContext] %w", err)
 	}
 
 	return nil
@@ -83,7 +87,7 @@ func (r *participantContacts) GetByParticipantId(ctx context.Context, participan
 			return contacts, nil
 		}
 
-		return nil, fmt.Errorf("repository][postgres][participantContacts][GetByParticipantId][dbtx.QueryContext] %w", err)
+		return nil, fmt.Errorf("[repository][postgres][participantContacts][GetByParticipantId][dbtx.QueryContext] %w", err)
 	}
 
 	for rows.Next() {
@@ -98,7 +102,7 @@ func (r *participantContacts) GetByParticipantId(ctx context.Context, participan
 			&contact.UpdatedAt,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("repository][postgres][participantContacts][GetByParticipantId][rows.Scan] %w", err)
+			return nil, fmt.Errorf("[repository][postgres][participantContacts][GetByParticipantId][rows.Scan] %w", err)
 		}
 
 		contacts = append(contacts, contact)

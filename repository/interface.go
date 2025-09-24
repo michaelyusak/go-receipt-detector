@@ -66,7 +66,7 @@ type Transaction interface {
 
 type ReceiptParticipants interface {
 	NewTx(tx *sql.Tx) ReceiptParticipants
-	InsertMany(ctx context.Context, participants []entity.ReceiptParticipant) error
+	InsertMany(ctx context.Context, receiptId int64, participants []entity.ReceiptParticipant) ([]int64, error)
 	GetByReceiptId(ctx context.Context, receiptId int64) ([]entity.ReceiptParticipant, error)
 }
 
