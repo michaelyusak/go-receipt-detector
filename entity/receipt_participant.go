@@ -16,4 +16,11 @@ type ReceiptParticipant struct {
 	UpdatedAt       *int64               `json:"updated_at,omitempty"`
 	DeletedAt       *int64               `json:"deleted_at,omitempty"`
 }
+
+type AddParticipantsRequest struct {
+	Participants []ReceiptParticipant `json:"participants" binding:"required,gte=1,dive"`
+}
+
+type GetParticipantsResponse struct {
+	Participants []ReceiptParticipant `json:"participants"`
 }
