@@ -20,4 +20,5 @@ type Receipt interface {
 type ReceiptParticipant interface {
 	AddParticipants(ctx context.Context, receiptId int64, participants []entity.ReceiptParticipant) error
 	GetByReceiptId(ctx context.Context, receiptId int64) ([]entity.ReceiptParticipant, error)
+	GetAllowedContactTypes() []string
 }

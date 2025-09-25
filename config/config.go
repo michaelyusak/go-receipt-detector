@@ -69,6 +69,7 @@ type AppConfig struct {
 	Storage        StorageConfig       `json:"storage"`
 	Ocr            OcrConfig           `json:"ocr"`
 	Hash           hHelper.HashConfig  `json:"hash"`
+	ContactTypes   []string            `json:"contact_types"`
 }
 
 func Init() (AppConfig, error) {

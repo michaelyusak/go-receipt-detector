@@ -84,3 +84,13 @@ func (h *ReceiptParticipant) GetParticipants(ctx *gin.Context) {
 		Participants: participants,
 	})
 }
+
+func (h *ReceiptParticipant) GetAllowedContactTypes(ctx *gin.Context) {
+	ctx.Header("Content-Type", "application/json")
+
+	allowedContactTypes := h.receiptParticipantService.GetAllowedContactTypes()
+
+	hHelper.ResponseOK(ctx, entity.GetAllowedContactTypesResponse{
+		AllowedContactTypes: allowedContactTypes,
+	})
+}

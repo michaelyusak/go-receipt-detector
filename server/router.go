@@ -176,6 +176,8 @@ func receiptRouting(router *gin.Engine, handler *handler.Receipt, hash hHelper.H
 }
 
 func receiptParticipantRouting(router *gin.Engine, handler *handler.ReceiptParticipant, hash hHelper.HashHelper) {
+	router.GET("/contact-types", handler.GetAllowedContactTypes)
+
 	receiptParticipantRouter := router.Group("/receipt/:receipt_id/participant")
 
 	deviceIdMiddleware := hMiddleware.NewAuth(hMiddleware.AuthOpt{

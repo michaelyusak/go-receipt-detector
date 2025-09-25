@@ -22,6 +22,8 @@ type receiptParticipant struct {
 
 	transaction repository.Transaction
 
+	allowedContactTypes []string
+
 	logTag string
 }
 
@@ -31,6 +33,8 @@ type ReceiptParticipantOpt struct {
 	ReceiptsRepo            repository.Receipts
 
 	Transaction repository.Transaction
+
+	AllowedContactTypes []string
 }
 
 func NewReceiptParticipant(opt ReceiptParticipantOpt) *receiptParticipant {
@@ -40,6 +44,8 @@ func NewReceiptParticipant(opt ReceiptParticipantOpt) *receiptParticipant {
 		receiptsRepo:            opt.ReceiptsRepo,
 
 		transaction: opt.Transaction,
+
+		allowedContactTypes: opt.AllowedContactTypes,
 
 		logTag: "[service][receiptParticipant]",
 	}
@@ -267,4 +273,8 @@ func (s *receiptParticipant) GetByReceiptId(ctx context.Context, receiptId int64
 	}
 
 	return participants, nil
+}
+
+func (s *receiptParticipant) GetAllowedContactTypes() []string {
+	return s.allowedContactTypes
 }

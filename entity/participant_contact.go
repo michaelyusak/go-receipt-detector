@@ -9,3 +9,7 @@ type ParticipantContact struct {
 	UpdatedAt     *int64 `json:"updated_at,omitempty"`
 	DeletedAt     *int64 `json:"deleted_at,omitempty"`
 }
+
+type GetAllowedContactTypesResponse struct {
+	AllowedContactTypes []string `json:"allowed_contact_types"`
+}
