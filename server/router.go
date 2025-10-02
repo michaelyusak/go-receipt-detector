@@ -91,6 +91,7 @@ func newRouter(config *config.AppConfig) *gin.Engine {
 		ParticipantContactsRepo: participantContactsRepo,
 		ReceiptsRepo:            receiptsRepo,
 		Transaction:             transaction,
+		AllowedContactTypes:     config.ContactTypes,
 	})
 
 	commonHandler := hHandler.NewCommonHandler(&APP_HEALTHY)
