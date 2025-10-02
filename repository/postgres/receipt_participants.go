@@ -68,6 +68,8 @@ func (r *receiptParticipants) InsertMany(ctx context.Context, receiptId int64, p
 		args = append(args, now)
 	}
 
+	q += `RETURNING participant_id`
+
 	participantIds := []int64{}
 
 	rows, err := r.dbtx.QueryContext(ctx, q, args...)
