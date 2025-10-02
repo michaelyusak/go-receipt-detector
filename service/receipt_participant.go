@@ -214,9 +214,6 @@ func (s *receiptParticipant) AddParticipants(ctx context.Context, receiptId int6
 		return nil
 	}
 
-	fmt.Println(partipantIds)
-	fmt.Println(participants)
-
 	allConntacts := make([]entity.ParticipantContact, 0, 10*len(participants))
 
 	for i, participant := range participants {
