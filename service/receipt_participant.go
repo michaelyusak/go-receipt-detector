@@ -157,17 +157,17 @@ func (s *receiptParticipant) AddParticipants(ctx context.Context, receiptId int6
 				logrus.WithFields(logrus.Fields{
 					"error":          err,
 					"error_rollback": errRollback,
-				}).Errorf("%s[ransaction.Rollback] Error during transaction", logTag)
+				}).Errorf("%s[transaction.Rollback] Error during transaction", logTag)
 			}
+logrus.Infof("%s[transaction.Rollback] transaction rollbacked", logTag)
 			return
 		}
 
 		errCommit := s.transaction.Commit()
 		if errCommit != nil {
 			logrus.WithFields(logrus.Fields{
-				"error":        err,
-				"error_commit": errCommit,
-			}).Errorf("%s[ransaction.Commit] Error during transaction", logTag)
+								"error_commit": errCommit,
+			}).Errorf("%s[transaction.Commit] Error during transaction", logTag)
 		}
 	}()
 
