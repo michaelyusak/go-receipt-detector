@@ -144,3 +144,100 @@ func (r *receiptParticipants) GetByReceiptId(ctx context.Context, receiptId int6
 
 	return participants, nil
 }
+
+func (r *receiptParticipants) GetByParticipantId(ctx context.Context, participantId int64) (*entity.ReceiptParticipant, error) {
+	q := `
+		SELECT participant_id, participant_name, receipt_id, notifying, notice_interval, last_notice, created_at, updated_at
+		FROM receipt_participants
+		WHERE participant_id = $1
+			AND deleted_at IS NULL
+	`
+
+	var participant entity.ReceiptParticipant
+
+	err := r.dbtx.QueryRowContext(ctx, q, participantId).Scan(
+		&participant.ParticipantId,
+		&participant.ParticipantName,
+		&participant.ReceiptId,
+		&participant.Notifying,
+		&participant.NoticeInterval,
+		&participant.LastNotice,
+		&participant.CreatedAt,
+		&participant.UpdatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+
+		return nil, fmt.Errorf("[repository][postgres][receiptParticipants][GetByParticipantId][dbtx.QueryRowContext] %w", err)
+	}
+
+	return &participant, nil
+}
+
+func (r *receiptParticipants) UpdateOne(ctx context.Context, receiptParticipant entity.ReceiptParticipant) error {
+	q := `
+		UPDATE receipt_participants
+		SET 
+	`
+
+	args := []any{}
+
+	q += `notifying = $1, `
+	args = append(args, receiptParticipant.Notifying)
+
+	i := 2
+
+	if !receiptParticipant.Notifying || receiptParticipant.NoticeInterval > 0 {
+		q += `notice_interval = $` + strconv.Itoa(i) + ", "
+		args = append(args, time.Duration(receiptParticipant.NoticeInterval).Milliseconds())
+		i++
+	}
+
+	if receiptParticipant.ParticipantName != "" {
+		q += `participant_name = $` + strconv.Itoa(i) + ", "
+		args = append(args, receiptParticipant.ParticipantName)
+		i++
+	}
+
+	q += `updated_at = $` + strconv.Itoa(i) +
+		` WHERE participant_id = $` + strconv.Itoa(i+1)
+	args = append(args, helper.NowUnixMilli())
+	args = append(args, receiptParticipant.ParticipantId)
+
+	_, err := r.dbtx.ExecContext(ctx, q, args...)
+	if err != nil {
+		return fmt.Errorf("[repository][postgres][receiptParticipants][UpdateOne][dbtx.ExecContext] %w", err)
+	}
+
+	return nil
+}
+
+func (r *receiptParticipants) DeleteByParticipantIds(ctx context.Context, participantIds []int64) error {
+	q := `
+		DELETE FROM receipt_participants
+		WHERE participant_id
+		IN (
+	`
+
+	args := []any{}
+
+	for i, participantId := range participantIds {
+		q += `$` + strconv.Itoa(i+1)
+		args = append(args, participantId)
+
+		if i != len(participantIds)-1 {
+			q += `, `
+		}
+	}
+
+	q += `)`
+
+	_, err := r.dbtx.ExecContext(ctx, q, args...)
+	if err != nil {
+		return fmt.Errorf("[repository][postgres][receiptParticipants][DeleteByParticipantIds][dbtx.ExecContext] %w", err)
+	}
+
+	return nil
+}

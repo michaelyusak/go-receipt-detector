@@ -68,10 +68,15 @@ type ReceiptParticipants interface {
 	NewTx(tx *sql.Tx) ReceiptParticipants
 	InsertMany(ctx context.Context, receiptId int64, participants []entity.ReceiptParticipant) ([]int64, error)
 	GetByReceiptId(ctx context.Context, receiptId int64) ([]entity.ReceiptParticipant, error)
+	GetByParticipantId(ctx context.Context, participantId int64) (*entity.ReceiptParticipant, error)
+	UpdateOne(ctx context.Context, receiptParticipant entity.ReceiptParticipant) error
+	DeleteByParticipantIds(ctx context.Context, participantIds []int64) error
 }
 
 type ParticipantContacts interface {
 	NewTx(tx *sql.Tx) ParticipantContacts
 	InsertMany(ctx context.Context, contacts []entity.ParticipantContact) error
 	GetByParticipantId(ctx context.Context, participantId int64) ([]entity.ParticipantContact, error)
+	DeleteByContactIds(ctx context.Context, contactIds []int64) error
+	DeleteByParticipantId(ctx context.Context, participantId int64) error
 }

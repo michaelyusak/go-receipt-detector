@@ -110,3 +110,45 @@ func (r *participantContacts) GetByParticipantId(ctx context.Context, participan
 
 	return contacts, nil
 }
+
+func (r *participantContacts) DeleteByContactIds(ctx context.Context, contactIds []int64) error {
+	q := `
+		DELETE FROM participant_contacts
+		WHERE contact_id 
+		IN (
+	`
+
+	args := []any{}
+
+	for i, contactId := range contactIds {
+		q += `$` + strconv.Itoa(i)
+		args = append(args, contactId)
+
+		if i != len(contactIds)-1 {
+			q += `, `
+		}
+	}
+
+	q += `)`
+
+	_, err := r.dbtx.ExecContext(ctx, q, args...)
+	if err != nil {
+		return fmt.Errorf("[repository][postgres][participantContacts][DeleteByContactIds][dbtx.ExecContext] %w", err)
+	}
+
+	return nil
+}
+
+func (r *participantContacts) DeleteByParticipantId(ctx context.Context, participantId int64) error {
+	q := `
+		DELETE FROM participant_contacts
+		WHERE participant_id = $1
+	`
+
+	_, err := r.dbtx.ExecContext(ctx, q, participantId)
+	if err != nil {
+		return fmt.Errorf("[repository][postgres][participantContacts][DeleteByParticipantId][dbtx.ExecContext] %w", err)
+	}
+
+	return nil
+}
