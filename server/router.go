@@ -68,6 +68,8 @@ func newRouter(config *config.AppConfig) *gin.Engine {
 	receiptParticipantsRepo := postgres.NewReceiptParticipants(db)
 	participantContactsRepo := postgres.NewParticipantContacts(db)
 
+	smtpHelper := hHelper.NewSmptpHelper(config.Smtp)
+
 	ocrEngine := ocr.NewOcEngineRestClient(config.Ocr.OcrEngine.BaseUrl)
 
 	receiptDetectionService := service.NewReceiptDetectionService(service.ReceiptDetectionResultsOpts{
@@ -90,6 +92,7 @@ func newRouter(config *config.AppConfig) *gin.Engine {
 		ReceiptParticipantsRepo: receiptParticipantsRepo,
 		ParticipantContactsRepo: participantContactsRepo,
 		ReceiptsRepo:            receiptsRepo,
+		SmptpHelper:             smtpHelper,
 		Transaction:             transaction,
 		AllowedContactTypes:     config.ContactTypes,
 	})
@@ -188,4 +191,6 @@ func receiptParticipantRouting(router *gin.Engine, handler *handler.ReceiptParti
 
 	receiptParticipantRouter.POST("", deviceIdMiddleware, handler.AddParticipants)
 	receiptParticipantRouter.GET("", deviceIdMiddleware, handler.GetParticipants)
+	receiptParticipantRouter.PATCH("/:participant_id", deviceIdMiddleware, handler.UpdateOne)
+	receiptParticipantRouter.DELETE("/:participant_id", deviceIdMiddleware, handler.DeleteOne)
 }

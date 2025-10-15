@@ -58,18 +58,19 @@ type StorageConfig struct {
 }
 
 type AppConfig struct {
-	Port           string              `json:"port"`
-	LogLevel       string              `json:"log_level"`
-	GracefulPeriod hEntity.Duration    `json:"graceful_period"`
-	Cors           CorsConfig          `json:"cors"`
-	Db             hEntity.DBConfig    `json:"db"`
-	Elasticsearch  ElasticSearchConfig `json:"elasticsearch"`
-	Redis          hEntity.RedisConfig `json:"redis"`
-	Cache          CacheConfig         `json:"cache"`
-	Storage        StorageConfig       `json:"storage"`
-	Ocr            OcrConfig           `json:"ocr"`
-	Hash           hHelper.HashConfig  `json:"hash"`
-	ContactTypes   []string            `json:"contact_types"`
+	Port           string                   `json:"port"`
+	LogLevel       string                   `json:"log_level"`
+	GracefulPeriod hEntity.Duration         `json:"graceful_period"`
+	Cors           CorsConfig               `json:"cors"`
+	Db             hEntity.DBConfig         `json:"db"`
+	Elasticsearch  ElasticSearchConfig      `json:"elasticsearch"`
+	Redis          hEntity.RedisConfig      `json:"redis"`
+	Cache          CacheConfig              `json:"cache"`
+	Storage        StorageConfig            `json:"storage"`
+	Ocr            OcrConfig                `json:"ocr"`
+	Hash           hHelper.HashConfig       `json:"hash"`
+	ContactTypes   []string                 `json:"contact_types"`
+	Smtp           hEntity.SmtpHelperConfig `json:"smtp"`
 }
 
 func Init() (AppConfig, error) {

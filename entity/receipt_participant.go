@@ -24,3 +24,7 @@ type AddParticipantsRequest struct {
 type GetParticipantsResponse struct {
 	Participants []ReceiptParticipant `json:"participants"`
 }
+
+type UpdateParticipantRequest struct {
+	Participant ReceiptParticipant `json:"participant" binding:"required"`
+}

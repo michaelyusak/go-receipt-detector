@@ -94,3 +94,51 @@ func (h *ReceiptParticipant) GetAllowedContactTypes(ctx *gin.Context) {
 		AllowedContactTypes: allowedContactTypes,
 	})
 }
+
+func (h *ReceiptParticipant) UpdateOne(ctx *gin.Context) {
+	ctx.Header("Content-Type", "application/json")
+
+	var req entity.UpdateParticipantRequest
+
+	err := ctx.ShouldBindJSON(&req)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	err = h.receiptParticipantService.UpdateOne(ctx.Request.Context(), req.Participant)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	hHelper.ResponseOK(ctx, nil)
+}
+
+func (h *ReceiptParticipant) DeleteOne(ctx *gin.Context) {
+	ctx.Header("Content-Type", "application/json")
+
+	participantIdStr := ctx.Param("participant_id")
+	if participantIdStr == "" {
+		ctx.Error(hApperror.BadRequestError(hApperror.AppErrorOpt{
+			ResponseMessage: "participant_id must be provided",
+		}))
+		return
+	}
+
+	participantId, err := strconv.Atoi(participantIdStr)
+	if err != nil {
+		ctx.Error(hApperror.BadRequestError(hApperror.AppErrorOpt{
+			ResponseMessage: "participant_id must be a number",
+		}))
+		return
+	}
+
+	err = h.receiptParticipantService.DeleteOne(ctx.Request.Context(), int64(participantId))
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	hHelper.ResponseOK(ctx, nil)
+}
