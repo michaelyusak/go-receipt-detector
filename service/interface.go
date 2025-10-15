@@ -16,3 +16,12 @@ type Receipt interface {
 	GetByReceiptId(ctx context.Context, billId int64) (*entity.Receipt, []entity.ReceiptItem, error)
 	UpdateOne(ctx context.Context, newBill entity.UpdateReceiptRequest) error
 }
+
+type ReceiptParticipant interface {
+	AddParticipants(ctx context.Context, receiptId int64, participants []entity.ReceiptParticipant) error
+	GetByReceiptId(ctx context.Context, receiptId int64) ([]entity.ReceiptParticipant, error)
+	GetAllowedContactTypes() []string
+	UpdateOne(ctx context.Context, participant entity.ReceiptParticipant) error
+	DeleteOne(ctx context.Context, participantId int64) error
+	NotifyParticipants(logTag string, receiptName string, participants []entity.ReceiptParticipant)
+}

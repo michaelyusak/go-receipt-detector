@@ -22,6 +22,8 @@ func (s *sqlTransaction) Begin() (*sql.Tx, error) {
 		return nil, fmt.Errorf("[transaction][Begin][db.Begin] Error: %w", err)
 	}
 
+	s.tx = tx
+
 	return tx, nil
 }
 

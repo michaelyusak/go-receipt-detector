@@ -39,7 +39,7 @@ func (r *receipts) InsertOne(ctx context.Context, receipt entity.Receipt) (int64
 
 	err := r.dbtx.QueryRowContext(ctx, q, receipt.ReceiptName, receipt.ReceiptDate, receipt.ResultId, receipt.DeviceId, helper.NowUnixMilli()).Scan(&receiptId)
 	if err != nil {
-		return receiptId, fmt.Errorf("repository][postgres][receipts][InsertOne][dbtx.ExecContext] %w", err)
+		return receiptId, fmt.Errorf("[repository][postgres][receipts][InsertOne][dbtx.ExecContext] %w", err)
 	}
 
 	return receiptId, nil
@@ -69,7 +69,7 @@ func (r *receipts) GetByReceiptId(ctx context.Context, receiptId int64, deviceId
 			return nil, nil
 		}
 
-		return nil, fmt.Errorf("repository][postgres][receipts][GetByReceiptId][dbtx.QueryRowContext] %w", err)
+		return nil, fmt.Errorf("[repository][postgres][receipts][GetByReceiptId][dbtx.QueryRowContext] %w", err)
 	}
 
 	return &receipt, nil
@@ -103,7 +103,7 @@ func (r *receipts) UpdateOne(ctx context.Context, newReceipt entity.UpdateReceip
 
 	_, err := r.dbtx.ExecContext(ctx, q, args...)
 	if err != nil {
-		return fmt.Errorf("repository][postgres][receipts][UpdateOne][dbtx.ExecContext] %w", err)
+		return fmt.Errorf("[repository][postgres][receipts][UpdateOne][dbtx.ExecContext] %w", err)
 	}
 
 	return nil

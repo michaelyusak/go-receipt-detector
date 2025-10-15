@@ -59,5 +59,12 @@
             "image/x-icon": true,
             "image/svg+xml": true
         }
-    }
+    },
+    "hash": {
+        "hash_cost": 5
+    },
+    "contact_types": [
+        "email",
+        "whatsapp"
+    ]
 }
